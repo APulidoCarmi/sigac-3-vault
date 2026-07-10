@@ -158,7 +158,7 @@ nuevas"); cada sub-plan lista los # del inventario que cubre. Las pantallas
 sub-plan propio: viven dentro de SP-05 (DGO).
 
 ### Fase 0 — Spike (desbloquea B1)
-- [[2026-07-10-refactor-flujo-ejecutivo-sp00-spike-b1-virtual]] — Spike esquema B1/virtual (Brecha #5). 📋
+- [[2026-07-10-refactor-flujo-ejecutivo-sp00-spike-b1-virtual]] — Spike esquema B1/virtual (Brecha #5). ✅ Ver [[SP-00 - Spike esquema B1-virtual - conclusiones]].
 
 ### Fase 1 — Plano documental (columna vertebral)
 - [[2026-07-10-refactor-flujo-ejecutivo-sp03-detalle-shell-menu-lateral]] — Shell del detalle + menú lateral + Resumen (#4, #13). Transversal, va primero. 📋

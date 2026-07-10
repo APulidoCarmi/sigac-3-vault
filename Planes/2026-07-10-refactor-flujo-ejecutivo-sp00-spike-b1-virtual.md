@@ -78,16 +78,20 @@ Hallazgos verificados en `carmi-odin-api-v2/prisma/schema.prisma` (NO en
 - **Refactoriza/crea:** nada en este spike (código exploratorio desechable).
 
 ## Pasos
-- [ ] Localizar en `carmi-db-api` el modelo/tabla de `TransportMode` y el esquema
-      de Reference/Operation (graphify primero; luego prisma/entidades).
-- [ ] Determinar si hay algún flag/enum/campo que marque "virtual" hoy, o si es
+- [x] Localizar en `carmi-db-api` el modelo/tabla de `TransportMode` y el esquema
+      de Reference/Operation (graphify primero; luego prisma/entidades). →
+      confirmado legado, 0 hits; el esquema real vive en
+      `carmi-odin-api-v2/prisma/schema.prisma`.
+- [x] Determinar si hay algún flag/enum/campo que marque "virtual" hoy, o si es
       ausencia total (⇒ requeriría migración de esquema, no solo un valor de enum).
-- [ ] Mapear dónde configurar los identificadores MS/IM/B1/IC (Documento: MS y IM
+      → ausencia total, confirmada línea por línea.
+- [x] Mapear dónde configurar los identificadores MS/IM/B1/IC (Documento: MS y IM
       a nivel relación cliente-proveedor/comprador; IC a nivel cliente si OEA).
-- [ ] Ubicar dónde viven hoy los folios y qué haría falta para alertas de vencimiento
+- [x] Ubicar dónde viven hoy los folios y qué haría falta para alertas de vencimiento
       (mensual, 10 días hábiles / 20 si OEA).
-- [ ] Escribir la nota de conclusión en `Arquitectura/` (conclusión duradera) con
-      evidencia (rutas de esquema, qué se probó, qué se concluyó).
+- [x] Escribir la nota de conclusión en `Arquitectura/` (conclusión duradera) con
+      evidencia (rutas de esquema, qué se probó, qué se concluyó). →
+      [[SP-00 - Spike esquema B1-virtual - conclusiones]].
 
 ## Fuera de alcance
 - Implementar el soporte B1 (pantallas, identificadores, alertas): fase posterior,
@@ -103,4 +107,10 @@ Hallazgos verificados en `carmi-odin-api-v2/prisma/schema.prisma` (NO en
   (no produce código de producción).
 
 ## Estado
-📋 Por ejecutar. **Bloquea** cualquier sub-plan de pantallas B1/virtual.
+✅ Cerrado (2026-07-10). Ver [[SP-00 - Spike esquema B1-virtual - conclusiones]]
+en Arquitectura/ — evidencia verificada contra
+`carmi-odin-api-v2/prisma/schema.prisma`. No se generó código de producción ni
+cambios en ningún repositorio (spike exploratorio, según su propio alcance).
+Queda **un punto abierto sin resolver** (`MompSupplier.companyId` opcional)
+que el `/plan` de pantallas B1 deberá decidir antes de diseñar el flujo de
+identificador B1.
