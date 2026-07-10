@@ -24,6 +24,54 @@ capa DTO. Falta el nivel de BD.
 en el modelo de datos actual, y dónde deben vivir sus identificadores y las
 alertas de folios?
 
+## Decisiones tomadas (entrevista previa a `/implementa`, con evidencia de esquema)
+
+Hallazgos verificados en `carmi-odin-api-v2/prisma/schema.prisma` (NO en
+`carmi-db-api`, que es un esquema legado distinto sin ningún hit de
+`Reference`/`Operation`/`TransportMode`):
+
+1. **`TransportMode` es tabla catálogo** (`model TransportMode`, L6814; filas
+   MARITIME/AIR/LAND vía `Reference.trafficTypeId`), no un enum. Confirma la
+   Brecha #5: no existe ningún flag/valor de "virtual" en `Reference`,
+   `Operation` ni `TransportMode`.
+2. **`isVirtual` es independiente del Tipo de Tráfico** (decisión tomada): una
+   referencia/operación puede ser virtual con cualquier `trafficType`
+   (MAR/AER/TER), no solo Aéreo. Aunque el origen del requisito (M6) es un meet
+   de Aéreo, no se restringe la Brecha en el esquema. Implementación futura:
+   nuevo campo boolean `isVirtual` en `Reference` (y/o `Operation`), ortogonal a
+   `trafficTypeId`.
+3. **Estructura de identificadores MS/IM/B1/IC:** `ReferenceIdentifier`/
+   `GlobalIdentifier` (L3334, L3387) ya tienen la forma `clave` + `c1/c2/c3`
+   (clave+complementos) — reutilizar esa tabla para las 4 claves en vez de
+   crear una nueva.
+   - **IM (IMMEX del propio cliente):** reutilizar `MompConfiguration.immex`
+     (L8814, ya existe a nivel cliente) como fuente; no se agrega campo nuevo.
+   - **IC (identificador OEA):** reutilizar `MompConfiguration.ic` (L8816, ya
+     existe). Nota: es un string libre, no un boolean de certificación — la
+     fase posterior deberá decidir si su sola presencia (no-nulo) basta como
+     señal de "cliente certificado OEA" o si hace falta un flag explícito
+     (relevante también para la regla de cierre 10 vs 20 días hábiles).
+   - **B1 (IMMEX de la contraparte):** **NO** se agrega campo a `MompSupplier`.
+     Se resuelve leyendo el `MompConfiguration.immex` de la Company de la
+     contraparte, cuando esa contraparte es también cliente del sistema (tiene
+     su propio `MompConfiguration` vía `MompSupplier.companyId` → `Company`).
+     **Punto abierto sin resolver:** `MompSupplier.companyId` es opcional
+     (`String?`) — si la contraparte NO es cliente del sistema (proveedor
+     puramente externo, sin `Company`/`MompConfiguration` propios), no hay
+     fuente de la que leer su IMMEX. La fase de implementación de pantallas B1
+     debe decidir qué pasa en ese caso (¿campo manual de respaldo? ¿bloquear
+     virtual si no hay match?).
+   - **MS (Modalidad de Servicios):** complemento siempre "1" — valor
+     constante, no requiere fuente de datos.
+4. **Folios B1 mensuales + alertas de vencimiento:** confirmado que no existe
+   ningún modelo hoy (se revisaron los 4 campos `*Folio` del esquema —
+   `coveFolio`, `eDocumentFolio`, `manifestationFolio`, `referenceFolio` — y
+   ninguno aplica). Decisión: nueva tabla dedicada (p. ej.
+   `VirtualOperationFolio`: mes, fecha límite, si aplica extensión OEA,
+   estado), ligada a `Reference`; las alertas de vencimiento se apoyan en el
+   módulo `notifications` ya existente en `carmi-odin-api-v2/src/notifications`
+   (mismo patrón que `momp-notification.service.ts`).
+
 ## D1 — punto de partida
 - **Reusa (para investigar):** `carmi-db-api` (prisma/entidades) para el catálogo
   `TransportMode` y el esquema de Reference/Operation; DTOs de odin ya inspeccionados.
