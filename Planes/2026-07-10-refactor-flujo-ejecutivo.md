@@ -214,6 +214,28 @@ sub-plan propio: viven dentro de SP-05 (DGO).
   que afecten a los siguientes (replaneo sobre este archivo si algo se invalida,
   según [[Planes paraguas y replaneo]]).
 
+## Convención de ramas de implementación (ejecución desatendida)
+
+Decisión operativa tomada al arrancar la ejecución desatendida del plan completo
+(2026-07-10), no especificada por el usuario — documentada aquí para que
+cualquier agente que retome la ejecución en una sesión nueva la respete:
+
+- **Rama por sub-plan, encadenada por repo**: cada sub-plan de código usa
+  `refactor/customs-operation-spNN` (dos dígitos). Dentro de un mismo repo, la
+  rama de un sub-plan **parte de la rama del sub-plan anterior que tocó ese
+  mismo repo** (no de la rama base original), porque los sub-planes de Fase 1
+  en adelante dependen unos de otros en el mismo código (p. ej. SP-01 vive
+  dentro del shell que crea SP-03). Si un sub-plan es el primero en tocar un
+  repo, su rama parte de la rama en la que estaba el repo al arrancar esta
+  ejecución.
+- **Ramas base por repo al arrancar (2026-07-10):** `carmi-digital` estaba en
+  `test` (con `public/firebase-messaging-sw.js` modificado sin commitear,
+  ajeno a este plan — no tocar); `carmi-odin-api-v2` estaba en `staging` (con
+  `src/operations/services/operations.service.ts` modificado sin commitear,
+  ajeno y además parte de `operations`, fuera de alcance — no tocar).
+- **Nunca push.** Alcance solo `customs-operation` — nunca `operations`.
+- Un sub-plan que NO toca un repo dado no genera rama en ese repo.
+
 ## Estado del paraguas
 
 📋 Redactado — pendiente de detallar los sub-planes hijos y validar en sesión
