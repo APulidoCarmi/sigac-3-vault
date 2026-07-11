@@ -58,10 +58,31 @@ el endpoint no expone `orderBy` custom hoy; se usa el orden por defecto
 (`createdAt desc`). Una priorización real queda para el Inbox completo (SP-17).
 
 ## Estado
-✅ Cerrado (2026-07-10). Ramas: `refactor/customs-operation-sp01` en
-`carmi-odin-api-v2` (commit `64402b45`, filtro `trafficTypeId` +
-cierre de spec coverage preexistente del controller) y en `carmi-digital`
-(commits `db4f2678`, `0354dd90`, sobre `refactor/customs-operation-sp03`).
-Gates estáticos verdes (lint, tsc, jest). Playwright NO ejecutado: el
-entorno usa credenciales reales (`.env`) contra infraestructura viva sin
-supervisión humana — no se navegó el flujo en vivo, ver guía de pruebas.
+✅ Cerrado — re-implementado desde cero (2026-07-11). La implementación
+anterior (commits `64402b45`, `db4f2678`, `0354dd90`) fue descartada por
+decisión del usuario y sus ramas eliminadas; este es un rehecho completo,
+sin heredar código de esa versión (solo se reutilizó la decisión ya
+documentada de mapeo de columnas del tablero, ver nota más abajo).
+
+Working tree sin commitear (revisión humana pendiente) en:
+- `carmi-odin-api-v2`, rama `refactor/customs-operation-sp01` desde `staging`:
+  `src/references/controllers/references.controller.ts` (query param
+  `trafficTypeId` + paso a `filters`) y
+  `src/references/controllers/references.controller.spec.ts` (test nuevo de
+  `trafficTypeId` + fix de un `import/order` preexistente en el mismo archivo).
+- `carmi-digital`, rama `refactor/customs-operation-sp01` (encadenada sobre el
+  diff de SP-03 en `refactor/customs-operation-sp03`, sin commitear entre
+  medio): `app/(customerPortal)/references/ui/ReferencesClient.tsx` (reescrito
+  como shell delgado con Tabs "Tablero"/"Tabla clásica"),
+  `app/(customerPortal)/references/components/ReferenceBoard.tsx` (nuevo,
+  tablero primario mínimo) y
+  `app/(customerPortal)/references/components/ReferenceClassicTable.tsx`
+  (nuevo, tabla clásica con filtros cliente/tráfico/estatus ampliados).
+
+Gates estáticos verdes: back — `jest` (controller + service specs de
+references), `eslint` y `tsc --noEmit` sin errores nuevos. Front — `tsc
+--noEmit` sin errores nuevos (solo preexistentes de módulos ajenos: `three`,
+`mammoth`) y `eslint` sin errores (1 warning `no-explicit-any` preexistente,
+mismo patrón que el código original). Playwright NO ejecutado: mismo motivo
+que el cierre anterior — el entorno usa credenciales reales (`.env`) contra
+infraestructura viva sin supervisión humana.
