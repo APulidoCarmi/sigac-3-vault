@@ -39,19 +39,25 @@ del [[Documento_Entendimiento_SIGAC3_Ejecutivo_v2]]. Relacionado con
 - El portal de carga del cliente (SP-18).
 
 ## Pasos
-- [ ] Resolver y aplicar el orden de los 3 pasos.
-- [ ] Reducir el wizard a 3 pasos; retirar el paso "Documentos Comerciales".
-- [ ] Añadir campo "orden de compra".
-- [ ] Soportar los dos sabores (cliente / ejecutivo).
-- [ ] Eliminar `reference-stepper/index.tsx`; resolver stepChecklistGlosa/stepInvoicesReference.
+- [x] Resolver y aplicar el orden de los 3 pasos. (datos básicos → documentos → auditoría, per M9)
+- [x] Reducir el wizard a 3 pasos; retirar el paso "Documentos Comerciales". (componente no borrado, queda para SP-05)
+- [x] Añadir campo "orden de compra". (código completo; migración Prisma bloqueada, ver manifiesto)
+- [x] Soportar los dos sabores (cliente / ejecutivo). (vía `user.IsInternalUser`; validar con negocio)
+- [x] Eliminar `reference-stepper/index.tsx`; resolver stepChecklistGlosa/stepInvoicesReference. (stepper eliminado; los otros dos quedan como decisión abierta, no cableados)
 
 ## Riesgos y side effects
 - Confirmar la versión de extracción correcta (v1 `/api/workflow/process` vs v3)
-  antes de tocar el paso de documentos.
+  antes de tocar el paso de documentos. — confirmado v1, sin tocar.
 
 ## Criterios de verificación
 - Gate estático verde. Playwright: crear una referencia por ambos sabores en 3
   pasos, sin exigir documentos comerciales, con OC; sin errores de consola.
+- Estático: verde (back tsc/eslint/jest; front tsc/eslint sobre archivos tocados).
+- Playwright: NO ejecutado (bloqueo de migración impide levantar el flujo completo).
 
 ## Estado
-📋 Por implementar.
+🟡 Parcialmente implementado — bloqueo de infraestructura en la migración Prisma
+(historial de migraciones inconsistente en el entorno, ver manifiesto en
+`.manifiestos/2026-07-10-refactor-flujo-ejecutivo-sp02-wizard-crear-referencia.md`).
+Decisiones abiertas: distinción cliente/ejecutivo sin validar con negocio;
+destino de `stepChecklistGlosa`/`stepInvoicesReference` sin resolver.
