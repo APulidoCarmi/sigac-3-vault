@@ -161,7 +161,7 @@ sub-plan propio: viven dentro de SP-05 (DGO).
 - [[2026-07-10-refactor-flujo-ejecutivo-sp00-spike-b1-virtual]] — Spike esquema B1/virtual (Brecha #5). ✅ Ver [[SP-00 - Spike esquema B1-virtual - conclusiones]].
 
 ### Fase 1 — Plano documental (columna vertebral)
-- [[2026-07-10-refactor-flujo-ejecutivo-sp03-detalle-shell-menu-lateral]] — Shell del detalle + menú lateral + Resumen (#4, #13). Transversal, va primero. 📋 Reabierto (2026-07-11): las ramas `refactor/customs-operation-sp03` se habían marcado ✅ pero se descartaron (rehacer desde cero) y se eliminaron en digital.
+- [[2026-07-10-refactor-flujo-ejecutivo-sp03-detalle-shell-menu-lateral]] — Shell del detalle + menú lateral + Resumen (#4, #13). Transversal, va primero. ✅ Cerrado (2026-07-11, rehecho desde cero): nueva rama `refactor/customs-operation-sp03` en `carmi-digital` partiendo de `test`, diff sin commitear para revisión humana.
 - [[2026-07-10-refactor-flujo-ejecutivo-sp01-listado-referencias]] — Listado de Referencias + tabla clásica (#2). 📋 Reabierto (2026-07-11): mismas ramas `refactor/customs-operation-sp01` descartadas y eliminadas en digital y odin.
 - [[2026-07-10-refactor-flujo-ejecutivo-sp02-wizard-crear-referencia]] — Wizard 3 pasos (#3). 📋
 - [[2026-07-10-refactor-flujo-ejecutivo-sp04-expediente-aduanero]] — Expediente + glosado Zeus/CEUS (#5). 📋
