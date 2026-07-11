@@ -161,8 +161,8 @@ sub-plan propio: viven dentro de SP-05 (DGO).
 - [[2026-07-10-refactor-flujo-ejecutivo-sp00-spike-b1-virtual]] — Spike esquema B1/virtual (Brecha #5). ✅ Ver [[SP-00 - Spike esquema B1-virtual - conclusiones]].
 
 ### Fase 1 — Plano documental (columna vertebral)
-- [[2026-07-10-refactor-flujo-ejecutivo-sp03-detalle-shell-menu-lateral]] — Shell del detalle + menú lateral + Resumen (#4, #13). Transversal, va primero. ✅ Cerrado (2026-07-10).
-- [[2026-07-10-refactor-flujo-ejecutivo-sp01-listado-referencias]] — Listado de Referencias + tabla clásica (#2). ✅ Cerrado (2026-07-10).
+- [[2026-07-10-refactor-flujo-ejecutivo-sp03-detalle-shell-menu-lateral]] — Shell del detalle + menú lateral + Resumen (#4, #13). Transversal, va primero. 📋 Reabierto (2026-07-11): las ramas `refactor/customs-operation-sp03` se habían marcado ✅ pero se descartaron (rehacer desde cero) y se eliminaron en digital.
+- [[2026-07-10-refactor-flujo-ejecutivo-sp01-listado-referencias]] — Listado de Referencias + tabla clásica (#2). 📋 Reabierto (2026-07-11): mismas ramas `refactor/customs-operation-sp01` descartadas y eliminadas en digital y odin.
 - [[2026-07-10-refactor-flujo-ejecutivo-sp02-wizard-crear-referencia]] — Wizard 3 pasos (#3). 📋
 - [[2026-07-10-refactor-flujo-ejecutivo-sp04-expediente-aduanero]] — Expediente + glosado Zeus/CEUS (#5). 📋
 - [[2026-07-10-refactor-flujo-ejecutivo-sp05-dgo-datos-glosados]] — DGO, fuente única de verdad (#6; absorbe #7/#9/#10). 📋
@@ -235,6 +235,13 @@ cualquier agente que retome la ejecución en una sesión nueva la respete:
   ajeno y además parte de `operations`, fuera de alcance — no tocar).
 - **Nunca push.** Alcance solo `customs-operation` — nunca `operations`.
 - Un sub-plan que NO toca un repo dado no genera rama en ese repo.
+- **Reinicio de Fase 1 (2026-07-11):** las ramas `refactor/customs-operation-sp01`
+  y `refactor/customs-operation-sp03` (digital) y `refactor/customs-operation-sp01`
+  / `sp02` (odin, esta última era idéntica a sp01 — solo el punto de partida
+  encadenado para SP-02, sin trabajo propio) se descartaron y eliminaron a
+  petición del usuario para rehacer SP-03 y SP-01 desde cero. La cadena vuelve
+  a partir de las ramas base: `carmi-digital` en `test`, `carmi-odin-api-v2` en
+  `staging`. SP-00 (spike, sin código) se deja cerrado sin cambios.
 
 ## Estado del paraguas
 
