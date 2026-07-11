@@ -34,12 +34,19 @@ Resumen) y el glosario "Referencia" (3 funciones) del
   diseño más reciente) y anotar el porqué.
 
 ## Pasos
-- [ ] Definir la estructura del menú lateral (secciones primarias vs secundarias)
-      con el volumen real de secciones de D1.
-- [ ] Construir el shell lateral reutilizable y migrar `ReferenceTabs.tsx` a él,
-      preservando el ruteo por sección.
-- [ ] Resolver Resumen (#4): incorporar (o no) la Línea de tiempo dentro de Resumen.
-- [ ] Corregir breadcrumbs.
+- [x] Definir la estructura del menú lateral (secciones primarias vs secundarias)
+      con el volumen real de secciones de D1: se listan las 9 secciones (10 de
+      D1 menos `timeline`, absorbida en Resumen) en una sola columna — el
+      lateral tiene espacio de sobra, ya no hace falta el split primary/dropdown
+      de las Tabs.
+- [x] Construir el shell lateral reutilizable y migrar `ReferenceTabs.tsx` a él
+      (renombrado `ReferenceDetailShell.tsx`, único importador actualizado en
+      `references/[id]/page.tsx`), preservando el ruteo por `?tab=` querystring.
+- [x] Resolver Resumen (#4): Línea de tiempo incorporada DENTRO de Resumen
+      (se sigue M9, fuente de diseño más reciente) en la 3ª columna del grid
+      que en D1 estaba sin usar.
+- [x] Corregir breadcrumbs: se quita el segmento intermedio del cliente
+      (enlazaba a la misma ruta que "Referencias", redundante).
 
 ## Fuera de alcance
 - El contenido/rediseño de cada sección (Expediente, DGO, Movimientos, etc.): sus
@@ -54,4 +61,9 @@ Resumen) y el glosario "Referencia" (3 funciones) del
   las secciones cargan sin errores de consola; breadcrumbs correctos.
 
 ## Estado
-📋 Por implementar.
+✅ Cerrado (2026-07-10). Rama `refactor/customs-operation-sp03` en
+`carmi-digital` (primer sub-plan en tocar el repo, partió de `test`), 3
+commits: shell lateral, timeline→Resumen, fix de breadcrumb. Gates estáticos
+verdes (lint, tsc). Playwright NO ejecutado: el entorno usa credenciales
+reales (`.env`) contra infraestructura viva sin supervisión humana — no se
+navegó el flujo en vivo, ver guía de pruebas.

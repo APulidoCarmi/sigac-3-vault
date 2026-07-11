@@ -161,8 +161,8 @@ sub-plan propio: viven dentro de SP-05 (DGO).
 - [[2026-07-10-refactor-flujo-ejecutivo-sp00-spike-b1-virtual]] — Spike esquema B1/virtual (Brecha #5). ✅ Ver [[SP-00 - Spike esquema B1-virtual - conclusiones]].
 
 ### Fase 1 — Plano documental (columna vertebral)
-- [[2026-07-10-refactor-flujo-ejecutivo-sp03-detalle-shell-menu-lateral]] — Shell del detalle + menú lateral + Resumen (#4, #13). Transversal, va primero. 📋
-- [[2026-07-10-refactor-flujo-ejecutivo-sp01-listado-referencias]] — Listado de Referencias + tabla clásica (#2). 📋
+- [[2026-07-10-refactor-flujo-ejecutivo-sp03-detalle-shell-menu-lateral]] — Shell del detalle + menú lateral + Resumen (#4, #13). Transversal, va primero. ✅ Cerrado (2026-07-10).
+- [[2026-07-10-refactor-flujo-ejecutivo-sp01-listado-referencias]] — Listado de Referencias + tabla clásica (#2). ✅ Cerrado (2026-07-10).
 - [[2026-07-10-refactor-flujo-ejecutivo-sp02-wizard-crear-referencia]] — Wizard 3 pasos (#3). 📋
 - [[2026-07-10-refactor-flujo-ejecutivo-sp04-expediente-aduanero]] — Expediente + glosado Zeus/CEUS (#5). 📋
 - [[2026-07-10-refactor-flujo-ejecutivo-sp05-dgo-datos-glosados]] — DGO, fuente única de verdad (#6; absorbe #7/#9/#10). 📋
