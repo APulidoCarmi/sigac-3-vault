@@ -1,0 +1,14 @@
+# Excluir del grafo: código vendored y artefactos de build
+node_modules/
+.next/
+dist/
+build/
+out/
+coverage/
+.git/
+.turbo/
+.cache/
+*.min.js
+*.map
+graphify-out/
+.playwright-mcp/
