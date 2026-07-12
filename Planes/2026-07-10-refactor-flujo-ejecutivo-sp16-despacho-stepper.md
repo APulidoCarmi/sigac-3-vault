@@ -187,14 +187,13 @@ para steps fallidos) en vez de reabrir el endpoint legacy `PATCH dispatch/modula
     con `order` entre `PAGO` (order 6) y `DODA` (order 7) — recorrer `order` de DODA→8 y
     MODULACION→9 — y `type: 'INTERNAL'` (no requiere Bifrost; es una asignación operativa
     interna/administrativa, salvo que producto indique lo contrario — ver pregunta abierta al final).
-  - El workflow (`ORDERED_STEPS`) debe **crear el `DispatchStep` de `SHIPPER` condicionalmente**: al
-    momento de `startDispatchWorkflow` (tanto el bueno de `OperationsController` como el que
-    sobreviva), tras resolver el `Pedimento` vinculado a la operación, comparar
-    `Number(pedimento.liquidacionEfectivo ?? 0) > 2500` (asumiendo que el campo ya está en USD —
-    confirmar contra el pipeline de captura de `liquidacionEfectivo`, ver pregunta abierta) y solo en
-    ese caso incluir `SHIPPER` en el array de `DispatchStep`s a crear (y por tanto en `ORDERED_STEPS`
-    efectivo de esa operación — el workflow debe leer el conjunto de steps ya creados en DB, no una
-    lista estática, para soportar la condicionalidad por operación).
+  - El workflow debe **crear el `DispatchStep` de `SHIPPER` dinámicamente, justo antes de ejecutar
+    PAGO/DODA** (no al arrancar el despacho): en ese punto del workflow, tras resolver el `Pedimento`
+    vinculado a la operación (ya con `liquidacionEfectivo` poblado, calculado en Validación/CAAREM),
+    comparar `Number(pedimento.liquidacionEfectivo ?? 0) > 2500` e insertar el `DispatchStep` de
+    SHIPPER en ese momento solo si aplica. El stepper pasa de 7 a 8 pasos en caliente — el workflow
+    debe leer el conjunto de steps ya creados en DB (no una lista estática fijada al inicio) para
+    soportar esta inserción a mitad de flujo.
   - Front: en `DISPATCH_STEPS`/`StepId`/`STEP_LABELS` (`types/operation-dispatch.ts`) añadir
     `shipper` tras `pago` y antes de `doda`. `OperationStepsTabs.tsx` debe **filtrar dinámicamente**
     el step `shipper` de la lista renderizada según si el `dispatchStatus.dispatchSteps` trae un
@@ -262,13 +261,15 @@ para steps fallidos) en vez de reabrir el endpoint legacy `PATCH dispatch/modula
 
 - [ ] Migración Prisma: añadir `StepName.SHIPPER`; actualizar `DISPATCH_STEPS_CONFIG` (orden y tipo)
       en `dispatch-steps.constant.ts`.
-- [ ] `operations.service.ts::startDispatchWorkflow()`: resolver `Pedimento` vinculado, calcular
-      `liquidacionEfectivo > 2500 USD`, crear `DispatchStep`s condicionalmente (con/sin SHIPPER).
-- [ ] `dispatch.workflow.ts`/`dispatch.activities.ts`: confirmar que `ORDERED_STEPS` se deriva de los
-      `DispatchStep`s ya creados en DB para esa operación (no de una lista estática), o ajustar para
-      que lo haga, de modo que el workflow salte SHIPPER cuando no se creó.
-- [ ] `dispatch.activities.ts`: añadir manejo de `SHIPPER` en `callBifrostApi` (o como INTERNAL si se
-      confirma que no requiere Bifrost — ver pregunta abierta) con lógica real de asignación.
+- [ ] `dispatch.workflow.ts`: justo antes de ejecutar PAGO/DODA, resolver el `Pedimento` vinculado,
+      calcular `liquidacionEfectivo > 2500 USD` e insertar dinámicamente el `DispatchStep` de SHIPPER
+      (tipo `INTERNAL`) solo si aplica.
+- [ ] `dispatch.workflow.ts`/`dispatch.activities.ts`: confirmar que `ORDERED_STEPS`/el render del
+      stepper se derivan de los `DispatchStep`s ya creados en DB para esa operación (no de una lista
+      estática fijada al inicio), de modo que el front pueda ver crecer el stepper de 7 a 8 pasos en
+      caliente cuando se inserta SHIPPER.
+- [ ] `dispatch.workflow.ts`: implementar SHIPPER como step `INTERNAL` (sin llamada a Bifrost, sin
+      espera de webhook) con la lógica real de asignación que corresponda.
 - [ ] Purga backend: eliminar `DispatchController.startDispatch`, `getDispatchStatus` (legacy),
       `completeModulacion`; eliminar `OperationDispatchService.completeModulacion/completeShipper/
       getDispatchStatus` (legacy) y tipos legacy en `dispatch.dto.ts` (`DispatchStepId`,
@@ -305,22 +306,15 @@ para steps fallidos) en vez de reabrir el endpoint legacy `PATCH dispatch/modula
   (step PEDIMENTO/MANIFESTACION) — validar el orden real de disponibilidad del dato antes de decidir
   el umbral de Shipper (ver pregunta abierta).
 
-## Pregunta abierta mínima (requiere decisión de producto, no de código)
+## Decisiones finales sobre Shipper (usuario, 2026-07-12)
 
-1. **Timing de la condición Shipper:** `Pedimento.liquidacionEfectivo` se calcula/persiste como parte
-   del propio flujo de despacho (steps de generación/validación de pedimento), no antes. Si al
-   momento de `POST :id/dispatch/start` el pedimento aún no tiene `liquidacionEfectivo` poblado, la
-   condición de Shipper no se puede evaluar en ese instante. Dos opciones: (a) evaluar la condición
-   más tarde, dinámicamente, justo antes del step PAGO/DODA (insertando el `DispatchStep` de SHIPPER
-   sobre la marcha si aplica, en vez de al inicio); o (b) exigir que el pedimento (con su liquidación)
-   ya exista antes de permitir iniciar despacho. Se necesita que el usuario confirme en qué momento
-   del flujo real el pedimento ya trae `liquidacionEfectivo` poblado (probablemente tras el step
-   VALIDACION/CAAREM) para fijar en qué punto exacto se evalúa el umbral y se crea/inserta el
-   `DispatchStep` de SHIPPER.
-2. **Tipo de step SHIPPER (`INTERNAL` vs `EXTERNAL`/Bifrost):** no hay evidencia en ningún repo de que
-   "asignar Shipper" implique una llamada a Bifrost — se asumió `INTERNAL` (paso administrativo). Si
-   el negocio sí requiere notificar a Bifrost/VUCEM la asignación de shipper, confirmarlo para
-   añadir el caso en `callBifrostApi` como EXTERNAL con webhook, igual que los demás steps.
+1. **Timing:** la condición se evalúa **dinámicamente, justo antes de Pago/DODA** — no al arrancar el
+   despacho. El `DispatchStep` de SHIPPER se inserta sobre la marcha si aplica, una vez que
+   `Pedimento.liquidacionEfectivo` ya está poblado (tras Validación/CAAREM). El stepper puede crecer
+   de 7 a 8 pasos ya iniciado el despacho — el front debe manejar esta inserción dinámica (no asumir
+   un conteo fijo de pasos desde el primer render).
+2. **Tipo de step:** **INTERNAL, sin Bifrost.** Es una asignación operativa que el ejecutivo resuelve
+   dentro del sistema, sin llamada externa ni espera de webhook.
 
 ## Criterios de verificación
 
@@ -332,7 +326,7 @@ para steps fallidos) en vez de reabrir el endpoint legacy `PATCH dispatch/modula
 
 ## Estado
 
-✍️ Redactado — listo para `/implementa`, salvo las 2 preguntas abiertas mínimas de timing/tipo del
-step Shipper (recomendable resolverlas con el usuario antes de tocar `startDispatchWorkflow`, pero no
-bloquean el resto de las tareas: purga de controllers/servicios legacy, retiro de GLOSA del stepper,
-limpieza de archivos muertos y unificación de `DispatchMonitor` pueden ejecutarse de inmediato).
+✍️ Redactado — listo para `/implementa` (2026-07-12). D1 corregido con las 4 decisiones de producto
+resueltas (GLOSA retirada del stepper, glosa vive en Zeus/Expediente, Shipper condicional con timing
+dinámico antes de Pago/DODA y tipo INTERNAL, unificación sobre el sistema Temporal/`DispatchStep`).
+Sin preguntas abiertas.
