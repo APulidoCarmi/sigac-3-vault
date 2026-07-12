@@ -33,11 +33,11 @@ actúa** en estos procesos (resuelto).
 - El seguimiento del transporte (trámite y despacho, solo lectura).
 
 ## Pasos
-- [ ] Reusar Asignación de Transporte (de SP-10).
-- [ ] Generar Cita (#20c) sobre la base de Appointments.
-- [ ] Import: Revalidación Marítima, Retorno de Vacío (con solicitud de fondos),
+- [x] Reusar Asignación de Transporte (de SP-10).
+- [x] Generar Cita (#20c) sobre la base de Appointments.
+- [x] Import: Revalidación Marítima, Retorno de Vacío (con solicitud de fondos),
       Recuperación de Garantía.
-- [ ] Export: Toma de Vacío, Carga de Mercancía, Ingreso de Mercancía.
+- [x] Export: Toma de Vacío, Carga de Mercancía, Ingreso de Mercancía.
 
 ## Riesgos y side effects
 - Depende de SP-07 (enrutado por tráfico), SP-10 (componente de transporte) y SP-14
@@ -49,4 +49,16 @@ actúa** en estos procesos (resuelto).
   cita PIS; sin errores de consola.
 
 ## Estado
-📋 Por implementar.
+✅ Cerrado (2026-07-12). Ver manifiesto:
+[[2026-07-10-refactor-flujo-ejecutivo-sp11-movimientos-maritimo]] en
+`Planes/.manifiestos/` para el detalle completo (dominios backend, componentes
+front, desviaciones documentadas, gates). Nota sobre "Generar Cita (#20c) sobre
+la base de Appointments": la investigación de implementación encontró que el
+`Appointment` de warehouse (`ReferenceAppointments.tsx` /
+`GET /references/:id/appointments`) es un modelo de agenda de muelle/puerta
+(transportista, chofer, sellos) sin noción de puerto/recinto aduanero — no es
+una base reusable para #20c. Se construyó en su lugar un modelo nuevo y
+liviano (`MaritimeAppointment`, N por Shipment) con la forma exacta que pide
+#20c (tipo de cita, puerto/recinto, fecha/hora, movimiento asociado),
+desacoplado del `Appointment` de warehouse. Desviación documentada en el
+manifiesto.
