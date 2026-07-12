@@ -36,11 +36,11 @@ de tesorería contra banco ni URL pública al cliente (esas → fase posterior).
   multi-pedimento (cruce de referencias entre procesos).
 
 ## Pasos
-- [ ] Reemplazar el POST vacío + alert por el módulo real (toast en vez de alert).
-- [ ] Categoría impuestos: extraer del cuadro de liquidación ("efectivo").
-- [ ] Categoría honorarios: cálculo automático por configuración de tarifas.
-- [ ] Categoría gastos comprobados: captura + integración.
-- [ ] Recalcular y totalizar automáticamente las 3; solicitud complementaria/parcial.
+- [x] Reemplazar el POST vacío + alert por el módulo real (toast en vez de alert).
+- [x] Categoría impuestos: extraer del cuadro de liquidación ("efectivo").
+- [x] Categoría honorarios: cálculo automático por configuración de tarifas.
+- [x] Categoría gastos comprobados: captura + integración.
+- [x] Recalcular y totalizar automáticamente las 3; solicitud complementaria/parcial.
 
 ## Riesgos y side effects
 - Depende de SP-05 (DGO/pedimento) y SP-06 (impuestos calculados) para los montos.
@@ -53,4 +53,7 @@ de tesorería contra banco ni URL pública al cliente (esas → fase posterior).
   de consola.
 
 ## Estado
-📋 Por implementar.
+✅ Cerrado (2026-07-12). Ver manifiesto:
+[[.manifiestos/2026-07-10-refactor-flujo-ejecutivo-sp14-solicitud-fondos]] para
+el detalle completo (brecha vs. D1, decisiones de diseño, archivos tocados,
+gates).
