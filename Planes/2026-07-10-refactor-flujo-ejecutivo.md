@@ -166,7 +166,7 @@ sub-plan propio: viven dentro de SP-05 (DGO).
 - [[2026-07-10-refactor-flujo-ejecutivo-sp02-wizard-crear-referencia]] — Wizard 3 pasos (#3). 🟡 Cierre parcial (2026-07-12): las dos decisiones de producto pendientes quedaron resueltas y validadas por el usuario (distinción cliente/ejecutivo confirma `IsInternalUser` sin cambios de código; `stepChecklistGlosa` y `stepInvoicesReference` eliminados por código muerto confirmado). Gate estático verde en ambos repos. Sigue 🟡 solo por el bloqueo de infraestructura en la migración Prisma del campo OC (historial de migraciones inconsistente en el entorno) — ver manifiesto.
 - [[2026-07-10-refactor-flujo-ejecutivo-sp04-expediente-aduanero]] — Expediente + glosado Zeus/CEUS (#5). ✅ Cerrado (2026-07-12, implementado junto con SP-05 en el mismo subagente por su dependencia circular — ver manifiestos de ambos). Ramas `refactor/customs-operation-sp05` (digital y odin, encadenada desde `sp04`), diff sin commitear.
 - [[2026-07-10-refactor-flujo-ejecutivo-sp05-dgo-datos-glosados]] — DGO, fuente única de verdad (#6; absorbe #7/#9/#10). ✅ Cerrado (2026-07-12). Reducciones de alcance documentadas en su manifiesto: filtrado por DGO en endpoints heredados de Mercancía/Gastos/Identificadores pendiente para N>1 DGO, indicador de consistencia vs Previo y MV electrónica fuera (dependen de SP-09), happy path Ángel/German sin correr (falta entorno con Playwright).
-- [[2026-07-10-refactor-flujo-ejecutivo-sp06-wizard-operacion-dgo]] — Wizard Operación 4 pasos → Step 0 DGO (#21). 🚧 Bloqueado (2026-07-12): el D1 del sub-plan cita como "reusa" archivos que en realidad son código huérfano nunca montado (`PedimentoWizardContext.tsx`, `StepInventorySelection.tsx`) — el Step 0 real de `page.tsx` es un placeholder sin implementar, y no existe un "cálculo de impuestos comentado" que reactivar (el TaxEngine real solo vive en `components/operations/**`, fuera de alcance). Requiere una ronda corta de `/plan` para redefinir el D1 antes de implementar — ver manifiesto para el detalle y las preguntas abiertas. Pendiente además cablear el bloqueo "no iniciar operación con factura con error de glosa" (`assertInvoicesGlossedOk` / `GET /reference-documents/reference/:id/can-start-operation`, expuesto por SP-04).
+- [[2026-07-10-refactor-flujo-ejecutivo-sp06-wizard-operacion-dgo]] — Wizard Operación 4 pasos → Step 0 DGO (#21). ✅ Cerrado (2026-07-12), tercer paso tras el bloqueo inicial y el replanteo: Step 0 real (`StepDgoSelection.tsx`) construido desde cero con soporte multi-DGO/multi-referencia (régimen aduanero homogéneo validado en back y front), migración `dgoId` en `OperationPedimento` (CLI), `POST /operations` conecta cada pedimento a la referencia real de su DGO, bloqueo de edición de DGO ya vinculado, cálculo de impuestos (TaxEngine) cableado en el Step de Despacho, bloqueo de glosa (`can-start-operation`) antes de crear la operación, y limpieza del código huérfano (`PedimentoWizardContext`, `StepInventorySelection`, `reference-selection/`, `hooks/`). Ver manifiesto para limitaciones documentadas (prellenado por-grupo parcial, `next build` bloqueado por dependencias preexistentes no relacionadas).
 
 ### Fase 2 — Movimientos y logística
 - [[2026-07-10-refactor-flujo-ejecutivo-sp07-tab-movimientos-por-trafico]] — Tab Movimientos rediseño por tráfico + vínculo flexible DGO (#8; reusa #14/#15/#17). 📋
@@ -245,21 +245,21 @@ cualquier agente que retome la ejecución en una sesión nueva la respete:
 
 ## Estado del paraguas
 
-🔨 En curso — Fase 1 **NO** quedó completamente cerrada en esta ronda:
-- ✅ Cerrados: SP-00 (spike, sin código), SP-03 (shell menú lateral), SP-04
-  (Expediente + glosado), SP-05 (DGO).
-- 📋 **Siguen abiertos, no tocados en esta ronda** (contradicen la premisa de
-  cadena continua con la que arrancó esta ronda de ejecución): SP-01 (Listado de
-  Referencias — "📋 Reabierto" desde 2026-07-11, ramas descartadas) y SP-02
-  (Wizard 3 pasos crear referencia — "📋", nunca marcado ✅ pese a que SP-04/SP-05
-  asumieron su cierre para encadenar ramas). Antes de dar Fase 1 por completa hay
-  que retomar SP-01 y SP-02.
-- 🚧 SP-06 (este cierre de ronda) quedó **bloqueado**, no implementado: el D1
-  describe un wizard y un "cálculo de impuestos comentado" que no existen en el
-  código real (ver manifiesto de SP-06). Necesita una ronda de `/plan` antes de
-  reintentar `/implementa`.
+✅ **Fase 1 completa cerrada (2026-07-12)** — sus 6 sub-planes están ✅:
+SP-00 (spike, sin código), SP-03 (shell menú lateral), SP-01 (Listado de
+Referencias), SP-02 (Wizard 3 pasos crear referencia — cierre parcial
+documentado en su propio manifiesto: bloqueo de infraestructura en la
+migración Prisma del campo OC, sin impacto en el resto de la cadena), SP-04
+(Expediente + glosado), SP-05 (DGO) y SP-06 (Wizard Operación → Step 0 DGO,
+multi-referencia/multi-DGO). Cadena de ramas encadenada sin cortes:
+SP-03 → SP-01 → SP-02 → SP-04 → SP-05 → SP-06, diff acumulado sin commitear en
+ambos repos (`carmi-digital`, `carmi-odin-api-v2`), rama compartida
+`refactor/customs-operation-sp06`.
 
-Pendiente transversal (todas las fases): validación Playwright end-to-end de
-principio a fin (SP-03/SP-04/SP-05 solo corrieron gates estáticos; ninguno
-levantó el entorno con Playwright por falta de `dev_url` configurado) — queda
-para una sesión humana con el entorno arriba.
+Pendiente transversal (todas las fases): **validación Playwright end-to-end de
+principio a fin sigue pendiente de sesión humana** — ningún sub-plan de Fase 1
+levantó el entorno con Playwright (falta `dev_url` configurado para este
+cliente; SP-06 además documentó en su manifiesto un bloqueo preexistente y no
+relacionado de `next build`/Turbopack por dependencias `three`/`mammoth` no
+resueltas en `node_modules`, a resolver con un `pnpm install` limpio antes de
+la sesión de Playwright).

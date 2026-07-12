@@ -272,52 +272,83 @@ sub-plan ya está **listo para `/implementa`**.
 
 ## Tareas
 
-- [ ] **Migración de esquema (back, `carmi-odin-api-v2`):** agregar `dgoId` a
+- [x] **Migración de esquema (back, `carmi-odin-api-v2`):** agregar `dgoId` a
   `OperationPedimento` (FK hacia `Dgo`); evaluar y documentar el ajuste de
   `Operation.referenceId` para el caso multi-referencia (punto 2/3). Generar
   vía `npx prisma migrate dev --name <kebab-case>`.
-- [ ] **Backend — endpoint(s) de selección multi-DGO/multi-referencia:** algo
+  → Migración `20260712034718_add_dgo_id_to_operation_pedimento` (CLI, aplicada).
+  `Operation.referenceId` se mantiene NOT NULL/singular (retrocompat, sigue
+  siendo la referencia primaria); la relación multi-referencia real vive ahora
+  en `OperationPedimento.dgoId → Dgo.referenceId` (cada pedimento se conecta a
+  la referencia real de su DGO, no a `primaryReferenceId`). Ver manifiesto.
+- [x] **Backend — endpoint(s) de selección multi-DGO/multi-referencia:** algo
   equivalente a "listar referencias con sus DGOs seleccionables" (hoy no
   existe; se resuelve hoy con N llamadas a `GET /dgo/:id` o `GET
   /dgo/reference/:referenceId`, pero para UX de Step 0 con posibles cientos de
   referencias conviene un endpoint dedicado, paginado, con filtro de régimen
   aduanero homogéneo).
-- [ ] **Backend — validación de régimen aduanero homogéneo** entre los DGOs
+  → `GET /dgo/selectable` (paginado, filtra DGO firmados y sin pedimento).
+- [x] **Backend — validación de régimen aduanero homogéneo** entre los DGOs
   seleccionados antes de crear la operación (o al momento de seleccionar).
-- [ ] **Backend — enforcement del bloqueo de edición del DGO** una vez
+  → `DgoService.validateHomogeneousRegimen` + `POST /dgo/validate-selection`
+  (selección) y reforzado también dentro de `OperationsService.create()`
+  (creación).
+- [x] **Backend — enforcement del bloqueo de edición del DGO** una vez
   vinculado a un pedimento (rechazar mutaciones sobre un DGO en ese estado).
-- [ ] **Backend — ajustar `POST /operations`** para aceptar y persistir de
+  → `DgoService.assertNotLocked`, aplicado en `update()` y `splitByClave()`.
+- [x] **Backend — ajustar `POST /operations`** para aceptar y persistir de
   verdad selección multi-referencia (no solo como metadata JSON): usar el
   `referenceIds[]` ya aceptado por el DTO y conectarlo realmente vía
   `OperationPedimento`→`Dgo`, en vez del `primaryReferenceId` actual.
-- [ ] **Frontend — construir el Step 0 "Seleccionar DGO(s)"** desde cero
+  → `PedimentoGroupDto.dgoId` nuevo; cada `Pedimento` se conecta a la
+  referencia real del DGO de su grupo (fallback a `primaryReferenceId` si el
+  grupo no trae `dgoId`, retrocompat).
+- [x] **Frontend — construir el Step 0 "Seleccionar DGO(s)"** desde cero
   (patrones de referencia: acordeón de `ReferenceDGOTab.tsx`, cards del
   `reference-selection/` ya eliminado — adaptar el patrón visual, no el
   código). Debe soportar seleccionar DGOs de **varias referencias**. Antes de
   avanzar: llamar `GET /reference-documents/reference/:referenceId/can-start-operation`
   por cada referencia involucrada y bloquear con mensaje claro si alguna falla
   (glosa con error).
-- [ ] **Frontend — extender el store** (`selectedReferences` + nuevo campo de
+  → `StepDgoSelection.tsx` (nuevo), montado como Step 0 en `page.tsx`.
+- [x] **Frontend — extender el store** (`selectedReferences` + nuevo campo de
   DGOs seleccionados, p.ej. `selectedDgos: SelectedDgo[]`), sin reemplazar el
   store existente.
-- [ ] **Frontend — adaptar `pedimentoGroups`** para que 1 DGO seleccionado = 1
+  → `SelectedDgo`, `state.selectedDgos`, `setSelectedDgos` en
+  `create-operation.store.ts`.
+- [x] **Frontend — adaptar `pedimentoGroups`** para que 1 DGO seleccionado = 1
   grupo/pedimento, con `formData` prellenado desde CADA DGO (aduana/clave/
   patente/régimen propios, punto 4).
-- [ ] **Frontend — cablear el cálculo de impuestos** desde un componente nuevo
+  → `pedimentoGroups[].dgoId`/`referenceId` nuevos + acción
+  `initializeGroupsFromDgos`. Limitación documentada en el manifiesto: el
+  prellenado por-grupo cubre régimen/clave/aduana (campos que sí difieren por
+  DGO); el resto de campos de despacho (fechas, agente, transporte,
+  identificadores) siguen siendo compartidos a nivel operación — un wizard
+  con pasos 3-5 por-pedimento completo (mencionado en comentarios del store)
+  es un rediseño de UI mayor, fuera de alcance de este sub-plan.
+- [x] **Frontend — cablear el cálculo de impuestos** desde un componente nuevo
   in-scope (dentro de `stepCustomsInfo.tsx` o hermano nuevo), llamando `POST
   /operations/preview-taxes` con wrapper nuevo en
   `lib/api/modules/customs-operation.ts`. Usar `isCalculatingTaxes` y
   `CustomsData.taxCalculation` ya modelados en el store.
-- [ ] **Frontend — mostrar el identificador legible del DGO** (`dgoNumber` u
+  → `customsOperationServices.previewTaxes` + botón "Calcular impuestos" en
+  la pestaña "Formas de Pago" de `stepCustomsInfo.tsx`.
+- [x] **Frontend — mostrar el identificador legible del DGO** (`dgoNumber` u
   ajuste si no alcanza, punto 7) en las pantallas de pedimento/despacho que
   correspondan.
-- [ ] **Frontend — ajustar `handleFinish()`** en `page.tsx` para construir el
+  → `dgoNumber` alcanza sin ajustes (ya existía desde SP-05); mostrado como
+  badges en el Step "Despacho" y en el resumen final del wizard.
+- [x] **Frontend — ajustar `handleFinish()`** en `page.tsx` para construir el
   payload multi-referencia/multi-DGO real (`referenceIds[]`, `shipments[]`/
   `invoices[]`/`items[]` derivados de las facturas de cada DGO seleccionado).
-- [ ] **Limpieza de código muerto** (punto 5): eliminar
+  → `referenceIds` derivado de `selectedDgos`, `pedimentos[]` con `dgoId` por
+  grupo derivado de `pedimentoGroups`.
+- [x] **Limpieza de código muerto** (punto 5): eliminar
   `PedimentoWizardContext.tsx`, `StepInventorySelection.tsx`,
   `StepIncrementables.tsx`, `StepPartidasTable.tsx`, `StepPedimentoHeader.tsx`,
   `reference-selection/` y sus hooks.
+  → Eliminados; verificado por grep que nada fuera de esos archivos los
+  importaba.
 
 ## Riesgos y side effects
 - Requiere cambios de esquema en `carmi-odin-api-v2` (migración `dgoId` +
