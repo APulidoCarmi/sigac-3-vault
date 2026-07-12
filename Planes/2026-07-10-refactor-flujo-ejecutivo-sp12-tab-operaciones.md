@@ -24,8 +24,8 @@ DGO/pedimentos repartidos en varias operaciones. Origen: glosario "Operación" d
   aunque sus botones viven en este tab.
 
 ## Pasos
-- [ ] Ajustar la consulta a "operaciones vinculadas vía DGO".
-- [ ] Verificar que la tabla refleja operaciones consolidadas (multi-referencia).
+- [x] Ajustar la consulta a "operaciones vinculadas vía DGO".
+- [x] Verificar que la tabla refleja operaciones consolidadas (multi-referencia).
 
 ## Riesgos y side effects
 - Depende del modelo DGO (SP-05). Coordinar con Carlos (listado de operaciones, M8).
@@ -35,4 +35,7 @@ DGO/pedimentos repartidos en varias operaciones. Origen: glosario "Operación" d
   operaciones muestra ambas; sin errores de consola.
 
 ## Estado
-📋 Por implementar.
+✅ Implementado en `refactor/customs-operation-sp12` (back: `carmi-odin-api-v2`). No se
+tocó el front: `ReferenceOperations.tsx` ya soportaba multi-referencia (SPEC-007) y no
+requería cambios estructurales, solo la fuente de datos (backend). Ver manifiesto:
+[[.manifiestos/2026-07-10-refactor-flujo-ejecutivo-sp12-tab-operaciones]].
