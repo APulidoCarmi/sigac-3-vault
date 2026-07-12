@@ -212,117 +212,133 @@ NO sobre el de 6 pasos `components/operations/CreateOperationModal.tsx` (ese est
 - El vínculo Movimiento↔DGO como mecanismo de creación (dato de trazabilidad en
   el tab Movimientos, SP-07).
 
-## Propuesta de tareas (ajustada a la realidad del código, pendiente de validar preguntas abiertas)
+## Decisiones finales (entrevista + verificación en meets, 2026-07-12)
 
-> Nota: estas tareas son un **borrador de diseño**, no una lista lista para
-> `/implementa`. Varias dependen de las decisiones de la sección final.
+Todas las preguntas abiertas de la ronda de replanteo quedaron resueltas. Este
+sub-plan ya está **listo para `/implementa`**.
 
-1. **Construir el Step 0 "Seleccionar DGO(s)" desde cero** (no hay componente
-   previo utilizable tal cual; sí hay dos patrones de referencia: el acordeón de
-   `ReferenceDGOTab.tsx` y las cards jerárquicas huérfanas de
-   `reference-selection/`). Alcance mínimo acordado en el paraguas: operar dentro
-   de **una** referencia (consistente con el límite real de `Operation.referenceId`
-   y de `GET /dgo/reference/:referenceId`) — selección multi-referencia queda
-   pendiente de la Pregunta 2.
-   - Llamar `GET /dgo/reference/:referenceId` para listar DGOs seleccionables
-     (status, # facturas, clave/aduana/patente/régimen).
-   - Antes de permitir avanzar: llamar
-     `GET /reference-documents/reference/:referenceId/can-start-operation` y
-     bloquear con mensaje claro si falla (glosa con error) — wiring nuevo (punto E).
-   - Guardar la selección en el store: **extender** (no reemplazar) el store
-     existente — usar/adaptar `selectedReferences` + un nuevo campo de DGOs
-     seleccionados (p.ej. `selectedDgos: SelectedDgo[]`), en vez de inventar un
-     store paralelo.
-2. **Adaptar `pedimentoGroups` (ya existente en el store) para que 1 DGO
-   seleccionado = 1 grupo/pedimento**, en vez de agrupar por factura manualmente.
-   Esto reaprovecha el mecanismo `formData` por grupo que el store ya modela,
-   evitando construir de cero el "multi-pedimento".
-3. **Prellenar los pasos 1-3 (Datos Básicos/Transporte/Despacho) desde el/los
-   DGO(s) seleccionados**: mapear `dgo.aduana/clavePedimento/patente/regimen` a
-   los campos equivalentes de `CustomsData`/`OperationBasicData` (mismo mapeo que
-   ya usa `stepOperationBasicData.tsx` con datos de referencia, extendido a DGO).
-   Cuando haya N DGOs, decidir en la entrevista si se prellena por grupo/pedimento
-   o se muestra un resumen agregado (Pregunta 4).
-4. **Cablear el cálculo de impuestos desde un componente nuevo in-scope**
-   (ej. dentro de `stepCustomsInfo.tsx` o un componente hermano nuevo en
-   `createOperation/components/`), llamando `POST /operations/preview-taxes`
-   directamente (es un endpoint del módulo backend `operations` que el wizard
-   in-scope ya consume para otras cosas — no es tocar `components/operations`
-   del front). Añadir el wrapper correspondiente a
-   `lib/api/modules/customs-operation.ts` (hoy no existe). Usar `isCalculatingTaxes`
-   y `CustomsData.taxCalculation`, ya modelados en el store, para el estado de
-   carga y el resultado.
-5. **Ajustar el payload de `POST /operations`** en `handleFinish()` de `page.tsx`
-   para construir `shipments[]`/`invoices[]`/`items[]` a partir de las facturas de
-   cada DGO seleccionado (hoy usa un único `sourceShipment`). Para el caso "N DGOs
-   de la misma referencia → N pedimentos bajo 1 operación", evaluar si basta con
-   1 sola llamada a `POST /operations` seguida de N operaciones sobre
-   `OperationPedimento` (ya soporta N:N), o si se requiere la migración de
-   `dgoId` en `OperationPedimento`/`Pedimento` (punto D) para trazabilidad — esto
-   necesita una decisión explícita (Pregunta 3) antes de codificar, porque implica
-   backend.
-6. **Limpieza de código muerto relacionado** (fuera del criterio estricto de
-   este sub-plan, pero se debe decidir si se hace aquí o en otro): evaluar borrar
-   o dejar como referencia histórica `PedimentoWizardContext.tsx`,
-   `StepInventorySelection.tsx`, `StepIncrementables.tsx`, `StepPartidasTable.tsx`,
-   `StepPedimentoHeader.tsx`, y la carpeta `reference-selection/` + sus hooks, ya
-   que ninguno se reutiliza tal cual (Pregunta 5).
+1. **Frontera `operations`:** confirmado por el usuario — el `/operations` de
+   **frontend** (Control Tower, `components/operations`, `customerPortal/operations`,
+   `actions/operations`) sigue fuera de alcance. El módulo backend NestJS
+   `src/operations` de `carmi-odin-api-v2` (el que respalda `/customs-operation`,
+   in-scope) **sí se puede y se debe tocar** cuando el refactor lo necesite —
+   incluye `preview-taxes` y cualquier endpoint nuevo que este sub-plan requiera.
+2. **Multi-referencia confirmado por los meets** (no solo multi-DGO de una
+   referencia): `Documento_Entendimiento_SIGAC3_Ejecutivo_v2` e
+   `Inventario_Pantallas_v3` fijan explícitamente "una operación agrupa uno o
+   más DGO/pedimentos, que pueden venir de varias referencias (consolidado)"
+   — con casos reales de hasta 16-19 referencias consolidadas
+   ([[2026-06-30 - Prueba operación real - glosa, pago y DODA]],
+   [[2026-06-26 - Prueba operación real - flujo ejecutivo y consolidación de documentos]]).
+   **Restricción a validar en Step 0:** régimen aduanero homogéneo entre los
+   DGOs seleccionados ([[2026-07-08 - Aéreo SIGAC 3.0]]: "criterios para
+   separar referencias: principalmente el régimen aduanero; también recepción
+   parcial y volumen"). Esto implica: `Operation.referenceId` deja de alcanzar
+   como única relación real — se necesita el cambio de esquema del punto 3.
+3. **Migración de esquema requerida** (back, `carmi-odin-api-v2`): agregar
+   `dgoId` a `OperationPedimento` (o a `Pedimento`) para trazabilidad explícita
+   Pedimento↔DGO — **no** basta con derivarlo vía `Invoice.dgoId`. Además, dado
+   que ahora una Operación agrupa DGOs de varias referencias, evaluar si
+   `Operation.referenceId` debe volverse opcional/derivado (la relación real
+   pasa a vivir en `OperationPedimento`→`Dgo`→`Reference`), documentando el
+   cambio de esquema. Generar SIEMPRE vía `npx prisma migrate dev --name
+   <kebab-case>` (regla global, nunca a mano).
+4. **Prellenado con múltiples DGOs:** un formulario por pedimento/grupo — cada
+   DGO seleccionado arma su propio grupo en `pedimentoGroups` con su propio
+   `formData` prellenado desde ESE DGO (aduana/clave/patente/régimen propios).
+   El usuario revisa/ajusta cada pedimento por separado dentro de la misma
+   operación.
+5. **Limpieza de código muerto: sí, en este sub-plan.** Al tocar exactamente
+   esa zona del wizard, se elimina el código huérfano confirmado:
+   `PedimentoWizardContext.tsx`, `StepInventorySelection.tsx`,
+   `StepIncrementables.tsx`, `StepPartidasTable.tsx`, `StepPedimentoHeader.tsx`,
+   la carpeta `reference-selection/` completa y sus hooks
+   (`useReferencesData.ts`, `usePreselectedReference.ts`,
+   `useItemAvailability.ts`, `useExpandedState.ts`).
+6. **Bloqueo de edición del DGO tras generar pedimento:** una vez que un DGO
+   está vinculado a un pedimento dentro de una operación, se congela — no se
+   permite reabrir/editar ese DGO (correcciones posteriores se hacen a nivel
+   pedimento/despacho, no reabriendo el DGO). Sin evidencia en meets para este
+   punto; es una decisión de producto del usuario (2026-07-12), documentar como
+   tal si más adelante se cuestiona.
+7. **Sin folio adicional, con código legible:** no se necesita un folio
+   separado que "viaje" del DGO al pedimento — la relación de BD (`dgoId`) es
+   suficiente para trazabilidad. Sí se quiere un identificador **legible por el
+   usuario** (no UUID) visible en las pantallas de despacho/pedimento. Antes de
+   crear un campo nuevo, **verificar si `dgoNumber`** (ya existe en el modelo
+   `Dgo` desde SP-05) cubre este uso — si su formato/generación no es apto para
+   mostrarse como "código" de cara al usuario, documentarlo y proponer ajuste
+   mínimo en vez de crear un campo paralelo redundante.
+
+## Tareas
+
+- [ ] **Migración de esquema (back, `carmi-odin-api-v2`):** agregar `dgoId` a
+  `OperationPedimento` (FK hacia `Dgo`); evaluar y documentar el ajuste de
+  `Operation.referenceId` para el caso multi-referencia (punto 2/3). Generar
+  vía `npx prisma migrate dev --name <kebab-case>`.
+- [ ] **Backend — endpoint(s) de selección multi-DGO/multi-referencia:** algo
+  equivalente a "listar referencias con sus DGOs seleccionables" (hoy no
+  existe; se resuelve hoy con N llamadas a `GET /dgo/:id` o `GET
+  /dgo/reference/:referenceId`, pero para UX de Step 0 con posibles cientos de
+  referencias conviene un endpoint dedicado, paginado, con filtro de régimen
+  aduanero homogéneo).
+- [ ] **Backend — validación de régimen aduanero homogéneo** entre los DGOs
+  seleccionados antes de crear la operación (o al momento de seleccionar).
+- [ ] **Backend — enforcement del bloqueo de edición del DGO** una vez
+  vinculado a un pedimento (rechazar mutaciones sobre un DGO en ese estado).
+- [ ] **Backend — ajustar `POST /operations`** para aceptar y persistir de
+  verdad selección multi-referencia (no solo como metadata JSON): usar el
+  `referenceIds[]` ya aceptado por el DTO y conectarlo realmente vía
+  `OperationPedimento`→`Dgo`, en vez del `primaryReferenceId` actual.
+- [ ] **Frontend — construir el Step 0 "Seleccionar DGO(s)"** desde cero
+  (patrones de referencia: acordeón de `ReferenceDGOTab.tsx`, cards del
+  `reference-selection/` ya eliminado — adaptar el patrón visual, no el
+  código). Debe soportar seleccionar DGOs de **varias referencias**. Antes de
+  avanzar: llamar `GET /reference-documents/reference/:referenceId/can-start-operation`
+  por cada referencia involucrada y bloquear con mensaje claro si alguna falla
+  (glosa con error).
+- [ ] **Frontend — extender el store** (`selectedReferences` + nuevo campo de
+  DGOs seleccionados, p.ej. `selectedDgos: SelectedDgo[]`), sin reemplazar el
+  store existente.
+- [ ] **Frontend — adaptar `pedimentoGroups`** para que 1 DGO seleccionado = 1
+  grupo/pedimento, con `formData` prellenado desde CADA DGO (aduana/clave/
+  patente/régimen propios, punto 4).
+- [ ] **Frontend — cablear el cálculo de impuestos** desde un componente nuevo
+  in-scope (dentro de `stepCustomsInfo.tsx` o hermano nuevo), llamando `POST
+  /operations/preview-taxes` con wrapper nuevo en
+  `lib/api/modules/customs-operation.ts`. Usar `isCalculatingTaxes` y
+  `CustomsData.taxCalculation` ya modelados en el store.
+- [ ] **Frontend — mostrar el identificador legible del DGO** (`dgoNumber` u
+  ajuste si no alcanza, punto 7) en las pantallas de pedimento/despacho que
+  correspondan.
+- [ ] **Frontend — ajustar `handleFinish()`** en `page.tsx` para construir el
+  payload multi-referencia/multi-DGO real (`referenceIds[]`, `shipments[]`/
+  `invoices[]`/`items[]` derivados de las facturas de cada DGO seleccionado).
+- [ ] **Limpieza de código muerto** (punto 5): eliminar
+  `PedimentoWizardContext.tsx`, `StepInventorySelection.tsx`,
+  `StepIncrementables.tsx`, `StepPartidasTable.tsx`, `StepPedimentoHeader.tsx`,
+  `reference-selection/` y sus hooks.
 
 ## Riesgos y side effects
-- **No tocar `components/operations`** (front, homónimo fuera de alcance) —
-  aclarado: sí se puede consumir el endpoint backend `POST /operations/preview-taxes`
-  del módulo NestJS `operations`, que es distinto del front `components/operations`
-  (ver Pregunta 1 para confirmar esta lectura con el humano).
-- Si la Pregunta 2 se resuelve como "sí, multi-referencia", este sub-plan pasa a
-  requerir cambios de esquema en `carmi-odin-api-v2` (rama nueva en ese repo,
-  hoy no creada) — cambia el alcance de "solo frontend" asumido originalmente.
+- Requiere cambios de esquema en `carmi-odin-api-v2` (migración `dgoId` +
+  ajuste de `Operation.referenceId`) — deja de ser "solo frontend".
+- El bloqueo de edición del DGO tras generar pedimento (decisión 6) no tiene
+  respaldo en meets — si en despacho (SP-16) aparece un caso real de necesitar
+  reabrir un DGO ya vinculado, revisar esta regla.
 - Depende de SP-05 (DGO) — ya disponible en `refactor/customs-operation-sp05`.
 
-## Criterios de verificación (sin cambios de fondo, pendiente ajuste fino tras la entrevista)
-- Gate estático verde. Playwright: crear una operación seleccionando 1+ DGOs de
-  una referencia → 1+ pedimentos bajo la operación, config prellenada del DGO,
-  impuestos calculados, bloqueo si la referencia tiene facturas con glosa en
-  error; sin errores de consola.
-
-## Preguntas abiertas para validar con el usuario antes de `/implementa`
-
-Estas preguntas son de producto/negocio o de alcance técnico que este sub-agente
-**no decidió por su cuenta** (política Plan-First / Human in the Loop):
-
-1. **Frontera de "fuera de alcance = `operations`".** ¿Se confirma que el límite
-   del paraguas aplica solo a rutas/componentes de **frontend** llamados
-   `operations` (Control Tower, `components/operations`, `customerPortal/operations`,
-   `actions/operations`), y que consumir el endpoint backend
-   `POST /operations/preview-taxes` (mismo módulo NestJS que ya usa el wizard
-   in-scope) desde un componente nuevo dentro de `createOperation/` **sí** está
-   permitido? Si la respuesta es "no, ni el backend", entonces hace falta diseñar
-   un TaxEngine paralelo o posponer el cálculo de impuestos a un sub-plan futuro.
-2. **Alcance de selección multi-DGO.** ¿La operación agrupa DGOs de **una sola
-   referencia** (más simple, consistente con `Operation.referenceId` singular en
-   BD y con `GET /dgo/reference/:referenceId`), o debe poder agrupar DGOs de
-   **varias referencias** (como sugiere el `referenceIds[]` ya aceptado —pero no
-   realmente soportado a nivel de relación— por el DTO backend)? Esto determina
-   si el sub-plan se queda en frontend o necesita una rama y cambios en
-   `carmi-odin-api-v2`.
-3. **Trazabilidad Pedimento↔DGO en BD.** Dado que `OperationPedimento` ya soporta
-   N pedimentos por operación pero **no** tiene columna `dgoId`, ¿se requiere una
-   migración pequeña para vincular explícitamente cada pedimento con su DGO de
-   origen, o basta con derivarlo indirectamente vía las facturas (`Invoice.dgoId`)
-   que ya trae cada pedimento?
-4. **Prellenado con múltiples DGOs.** Si se seleccionan 2+ DGOs con datos de
-   pedimento distintos (aduana/clave/régimen), ¿se prellena un formulario por
-   pedimento/grupo (consistente con `pedimentoGroups.formData` ya modelado en el
-   store), o se pide un dato único a nivel operación y se replica a todos los
-   pedimentos?
-5. **Limpieza de código muerto.** ¿Se borra en este mismo sub-plan el código
-   huérfano identificado (`PedimentoWizardContext.tsx` y familia, más
-   `reference-selection/` y sus hooks), o se deja intacto y se limpia en un
-   sub-plan de "deuda técnica" aparte para no mezclar alcances?
+## Criterios de verificación
+- Gate estático verde. Playwright: crear una operación seleccionando DGOs de
+  **más de una referencia** con régimen aduanero homogéneo → N pedimentos bajo
+  la operación (uno por DGO, con su propio formulario prellenado), impuestos
+  calculados, bloqueo si alguna referencia tiene facturas con glosa en error,
+  bloqueo si se intenta editar un DGO ya vinculado a un pedimento; sin errores
+  de consola.
 
 ## Estado
-📋 Redactado — pendiente de validar preguntas abiertas con el usuario. No
-implementar todavía. D1 verificado directamente contra el código fuente real
-(no solo contra el manifiesto del intento anterior) el 2026-07-11. Historial del
-intento previo conservado arriba (no se borró el rastro). El manifiesto original
-con el diagnóstico que originó este replanteo sigue en
+✍️ Redactado — listo para `/implementa`. D1 verificado directamente contra el
+código fuente real (2026-07-11) y todas las decisiones de producto validadas
+con el usuario + evidencia de meets (2026-07-12, ver "Decisiones finales").
+Historial del intento previo conservado arriba (no se borró el rastro). El
+manifiesto original con el diagnóstico que originó el replanteo sigue en
 `Planes/.manifiestos/2026-07-10-refactor-flujo-ejecutivo-sp06-wizard-operacion-dgo.md`.
