@@ -170,7 +170,7 @@ sub-plan propio: viven dentro de SP-05 (DGO).
 
 ### Fase 2 — Movimientos y logística
 - [[2026-07-10-refactor-flujo-ejecutivo-sp07-tab-movimientos-por-trafico]] — Tab Movimientos rediseño por tráfico + vínculo flexible DGO (#8; reusa #14/#15/#17). ✅ Cerrado (2026-07-11): `ReferenceShipments.tsx` pasó a ser un router delgado por `reference.trafficType.code` (nuevo campo expuesto en `ReferenceDetail`) que reusa sin cambios el flujo terrestre ya existente (renombrado a `ReferenceShipmentsTerrestre.tsx`) y deja un placeholder explícito para aéreo/marítimo (SP-10/SP-11). Trazabilidad DGO↔movimiento nueva de punta a punta (no existía): backend resuelve `Shipment → InvoiceShipmentLink → Invoice.dgoId → Dgo` deduplicado en `GET /shipments/reference/:referenceId`, front pinta badges "DGO-N" por movimiento. Ambos repos, gate estático verde, Playwright pendiente de sesión humana.
-- [[2026-07-10-refactor-flujo-ejecutivo-sp08-recinto]] — Recinto (solo lectura) por tráfico (#12). 📋
+- [[2026-07-10-refactor-flujo-ejecutivo-sp08-recinto]] — Recinto (solo lectura) por tráfico (#12). ✅ Cerrado (2026-07-11): `ReferenceWarehouse.tsx` adaptado in-place (sin router por archivos, a diferencia de SP-07, porque no hay sub-plan futuro que rehaga Recinto por tráfico) — nombre/copy por `reference.trafficType.code` (Almacén/Almacén Fiscalizado/Terminal) y remoción de toda acción de escritura (confirmar arribo/inspeccionar/despachar, crear solicitud, subir evidencia, crear registro), dejando el tab 100% consulta. Solo `carmi-digital` tocado (backend no diferencia por tráfico hoy — ver manifiesto). Gate estático verde, Playwright pendiente de sesión humana.
 - [[2026-07-10-refactor-flujo-ejecutivo-sp09-previo-osd]] — Previo tab + Solicitar Previo + OS&D consulta (#12b, #20b, #16). 📋
 - [[2026-07-10-refactor-flujo-ejecutivo-sp10-movimientos-aereo]] — Manifiestos + Revalidación + Asignación Transporte aéreo (#20, #18, #19). 📋
 - [[2026-07-10-refactor-flujo-ejecutivo-sp11-movimientos-maritimo]] — Revalidación/Retorno de Vacío/Recuperación/Toma/Carga/Ingreso + Generar Cita (#18, #19, #20c + export marítimo). 📋
@@ -257,9 +257,12 @@ ambos repos (`carmi-digital`, `carmi-odin-api-v2`), rama compartida
 `refactor/customs-operation-sp06`.
 
 **Fase 2 iniciada:** SP-07 (tab Movimientos por tráfico) ✅ cerrado
-(2026-07-11), primer hijo transversal de Fase 2. Cadena de ramas extendida:
-...→ SP-06 → SP-07 (`refactor/customs-operation-sp07`, ambos repos), diff
-acumulado sin commitear.
+(2026-07-11), primer hijo transversal de Fase 2. SP-08 (Recinto por tráfico)
+✅ cerrado (2026-07-11) — solo tocó `carmi-digital`. Cadena de ramas
+extendida: ...→ SP-06 → SP-07 → SP-08 (`refactor/customs-operation-sp08` en
+`carmi-digital`; `carmi-odin-api-v2` se quedó en la rama `sp08` creada por
+convención pero sin diff propio, sigue cargando el diff acumulado de SP-07),
+diff acumulado sin commitear en ambos repos.
 
 Pendiente transversal (todas las fases): **validación Playwright end-to-end de
 principio a fin sigue pendiente de sesión humana** — ningún sub-plan de Fase 1
