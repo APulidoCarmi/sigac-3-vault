@@ -18,14 +18,13 @@ en ambos repos).
 ## D1 — piezas del Inbox
 
 ### Pieza 1 — Tabs "automático / temporal / avanzado" (Referencias en curso)
-**ELIMINADA de los requerimientos (decisión del usuario, 2026-07-12).** No es
-un diferimiento: esta pieza se retira por completo del alcance del refactor,
-no solo de este sub-plan. No existe campo/enum para esto en ningún repo
-(confirmado, ver manifiesto) y no hay contexto de negocio que la sustente. La
-columna "En curso" del tablero de SP-01 (`ReferenceBoard.tsx`, estados
-`QUOTED`+`APPROVED`) se mantiene tal cual, sin tabs, dentro del Inbox — no se
-reabre esta pieza salvo que el usuario la reintroduzca explícitamente como un
-requerimiento nuevo en el futuro.
+**DIFERIDA — fuera de alcance de este sub-plan.** El usuario no tiene contexto
+de negocio para definir qué significan estos 3 valores y pidió dejarlo
+pendiente en vez de construir algo a ciegas. No hay campo/enum para esto en
+ningún repo (confirmado, ver manifiesto). **No implementar.** Cuando exista
+contexto de producto, abrir un sub-plan nuevo (no reabrir este).
+La columna "En curso" del tablero de SP-01 (`ReferenceBoard.tsx`, estados
+`QUOTED`+`APPROVED`) se mantiene tal cual, sin tabs, dentro del Inbox.
 
 ### Pieza 2 — Cartas sin firmar
 **Contexto de negocio (dado por el usuario):** las "cartas" (cartas de
