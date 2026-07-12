@@ -113,3 +113,223 @@ sobre la marcha sin decisión de producto/arquitectura.
 Volver a `/plan` (o una sesión de replanteo dirigida, como se hizo con SP-06) para que un
 humano resuelva las 4 decisiones de arriba y quede un D1 corregido con tareas ejecutables
 sin ambigüedad de arquitectura, antes de reabrir `/implementa` sobre este sub-plan.
+
+---
+
+## 2026-07-12 — Segundo intento de `/implementa`, sobre el D1 rediseñado
+
+**Estado: 🟡 PARCIALMENTE COMPLETADO.** El D1 rediseñado (mismo documento, sección "D1
+corregido") resolvió las 4 decisiones pendientes de arriba con buena investigación de
+código real. Se implementó todo lo que el D1 rediseñado describía con precisión
+verificable. Se encontró **una premisa adicional, no cubierta por el D1 rediseñado**, que
+bloquea solo la tarea de "purga backend legacy" (no las demás) — documentada abajo con
+recomendación de un sub-plan dedicado en vez de forzarla.
+
+Rama de trabajo reusada en ambos repos: `refactor/customs-operation-sp16` (la del intento
+bloqueado, vacía de cambios propios propios, con el diff acumulado de sp13/sp18 intacto —
+confirmado antes de tocar código).
+
+### Hallazgo nuevo: la "purga backend" (Pasos, ítem 5) es más entrelazada de lo que el D1
+rediseñado asumía
+
+El D1 rediseñado (sección B) afirma que solo 3 métodos son legacy y purgables:
+`completeModulacion()`, `completeShipper()`, `getDispatchStatus()`. Una investigación
+dedicada (subagente, lectura completa de `operation-dispatch.service.ts` y
+`dispatch.dto.ts`) encontró que el blob legacy (`OperationDispatchMetadata`,
+`DispatchStepId`, `createInitialDispatch()`) está más entrelazado con rutas HTTP **hoy
+vivas** de lo que el D1 asumía:
+
+- `getDispatchStatus()` (el método, no la ruta — la ruta HTTP ya está sombreada por
+  `getDispatchStatusNew` dentro del mismo controller) sigue siendo invocado internamente
+  por `regeneratePedimento()`, que sí es una ruta viva (`POST :id/dispatch/regenerate-pedimento`,
+  usada por `StepPedimento.tsx`/`StepGlosa`). Eliminar `getDispatchStatus()` rompe esa ruta
+  sin antes reconstruir su cálculo de progreso sobre la tabla `DispatchStep` real.
+- `completeModulacion()` y `executeStepPublic()`/`executeStep()` son rutas HTTP **en vivo**
+  (`PATCH :id/dispatch/modulacion`, `POST :id/dispatch/steps/*`) construidas enteramente
+  sobre el blob legacy, y **no están mencionadas como tal en el D1 rediseñado** (que solo
+  nombra `completeModulacion` entre las tres a eliminar, sin notar que
+  `executeStepPublic`/`executeStep` son un cuarto camino vivo con la misma dependencia).
+  Llaman internamente a los mismos `completeEDocuments`/`completeCove`/`completeManifestacion`/
+  `completeValidacion` que usa Temporal, envueltos en bookkeeping del blob.
+- `confirmarValidacionCaarem()` (ruta `POST :id/dispatch/validacion/webhook`) escribe
+  **solo** el blob legacy y no toca `DispatchStep` ni señala a Temporal — a diferencia del
+  webhook real de Bifrost (`webhook.controller.ts`). Ningún código del repo construye una
+  URL hacia esta ruta, lo que sugiere que, si está viva, es porque Bifrost mismo la tiene
+  configurada como destino de webhook **fuera de este repo** — algo que un grep no puede
+  confirmar ni descartar. Borrarla a ciegas arriesga romper silenciosamente una integración
+  externa real, exactamente el riesgo que este sub-plan más quería evitar.
+- `generatePedimento()` (usado por `regeneratePedimento`) persiste su único registro de
+  "pedimento generado" dentro del blob (`dispatch.steps.pedimento`) — no hay tabla real
+  equivalente; purgar el blob sin antes migrar este dato rompe la única fuente de verdad de
+  ese estado.
+
+**Decisión tomada en esta sesión:** no forzar la purga de `getDispatchStatus`,
+`completeModulacion`, `executeStepPublic`/`executeStep`, `confirmarValidacionCaarem`, ni los
+tipos legacy de `dispatch.dto.ts` (`DispatchStepId`, `OperationDispatchMetadata`, `*Data`
+legacy). Sí se completó la parte de la purga que **no** tenía esta entrelazación:
+`DispatchController.startDispatch` (duplicado confirmado inalcanzable — pierde la colisión
+de ruta contra `OperationsController::startDispatchWorkflow`, que además es la
+implementación con mejores validaciones). Se recomienda un sub-plan dedicado y acotado
+("purga legacy dispatch blob") que primero resuelva: (a) migrar el cálculo de
+`regeneratePedimento`/`generatePedimento` a la tabla `DispatchStep` real, (b) confirmar con
+quien administra la configuración de Bifrost si `POST :id/dispatch/validacion/webhook`
+sigue siendo un destino real, y (c) decidir si `executeStepPublic`/`completeModulacion`
+siguen teniendo un consumidor real en el front (grep del front no encontró llamadas activas
+a `PATCH .../dispatch/modulacion` tras retirar `completeModulacion` de
+`useOperationDispatch.ts` en esta sesión — pero `executeStepPublic`'s rutas
+`/dispatch/steps/*` no se tocaron ni se investigó su consumidor front a fondo, al ser
+explícitamente fuera del alcance de este intento).
+
+### Qué sí se implementó
+
+**Backend (`carmi-odin-api-v2`, rama `refactor/customs-operation-sp16`):**
+
+- `prisma/schema.prisma`: `StepName.SHIPPER` añadido al enum, entre `PAGO` y `DODA`.
+  Migración generada con `npx prisma migrate dev --name add-shipper-step-name`
+  (`20260712093255_add_shipper_step_name`) — `prisma migrate status` confirmó estado limpio
+  antes de generar.
+- `src/operations/constants/dispatch-steps.constant.ts`: `DISPATCH_STEPS_CONFIG.SHIPPER =
+  { order: 7, type: 'INTERNAL' }`, reordenados `DODA` (8) y `MODULACION` (9). Nuevas
+  constantes exportadas: `SHIPPER_LIQUIDACION_EFECTIVO_THRESHOLD_USD` (2500) y
+  `UNCONDITIONAL_ORDERED_STEPS` (todos los steps salvo SHIPPER, para la creación inicial).
+- `src/operations/services/operations.service.ts::startDispatchWorkflow()`: ahora crea
+  `DispatchStep`s a partir de `UNCONDITIONAL_ORDERED_STEPS` (8, sin SHIPPER) en vez de
+  `Object.entries(DISPATCH_STEPS_CONFIG)` completo — SHIPPER ya no se crea al arrancar.
+- `src/temporal/activities/dispatch.activities.ts`: tres activities nuevas —
+  `evaluateShipperStep` (resuelve el `Pedimento` vinculado vía `OperationPedimento`, compara
+  `liquidacionEfectivo > 2500`), `createShipperStep` (crea el `DispatchStep` idempotente),
+  `processShipperStep` (INTERNAL, sin Bifrost — ver desviación abajo).
+- `src/temporal/workflows/dispatch.workflow.ts`: dentro del loop sobre `ORDERED_STEPS`,
+  al llegar a `SHIPPER` (que por su `order` cae exactamente entre PAGO y DODA) evalúa la
+  condición y, si no aplica, hace `continue` (no crea el step, no cuenta para el progreso);
+  si aplica, crea el `DispatchStep` dinámicamente ahí mismo y lo procesa como INTERNAL vía
+  `processShipperStep`. También se limpió una rama muerta (`else if (stepName ===
+  'MODULACION')` con un `// TODO` sin resolver dentro del branch INTERNAL — nunca se
+  ejecutaba porque MODULACION es EXTERNAL en `DISPATCH_STEPS_CONFIG`; se retiró en vez de
+  dejar el TODO, por la regla de no dejar TODOs sin resolver).
+- `src/operations/controllers/dispatch.controller.ts`: eliminado `startDispatch`
+  (`POST :id/dispatch/start`, duplicado inalcanzable) y sus imports muertos (`StartDispatchDto`,
+  `StepName`, `DISPATCH_STEPS_CONFIG`, `DispatchStepConfig`).
+- `src/operations/controllers/dispatch.controller.spec.ts`: eliminado el test de
+  `startDispatch` y su mock, correspondiente al método borrado.
+- Verificación: `npx tsc --noEmit -p .` limpio (mismos errores preexistentes no
+  relacionados en specs de otros módulos, confirmados por diff); `npx eslint` limpio (solo
+  2 warnings preexistentes de variables no usadas, no tocadas por este cambio);
+  `npx jest src/operations/services/operation-dispatch.service.spec.ts
+  src/operations/controllers/dispatch.controller.spec.ts
+  src/operations/services/operations.service.spec.ts` → 3 suites, 9 tests, todos verdes.
+
+**Desviación documentada — `processShipperStep` sin regla de negocio explícita:** el D1
+rediseñado dice "tipo INTERNAL... con la lógica real de asignación que corresponda" pero no
+especifica ninguna regla de negocio para SHIPPER más allá del umbral que decide su
+creación. No existe en ningún repo (ni legacy ni vivo) una lógica de "asignación de
+shipper" preexistente para reutilizar. Se implementó `processShipperStep` como un
+checkpoint de auditoría/visibilidad que se completa automáticamente (igual que el `GLOSA`
+completa automáticamente si no hay discrepancias) — no lanza error, no requiere
+intervención. Si el negocio efectivamente necesita una acción manual (p. ej. capturar un
+shipper/transportista asignado), esto requiere una decisión de producto y probablemente un
+endpoint nuevo — no estaba en el alcance de tareas de este sub-plan y no se inventó.
+
+**Front (`carmi-digital`, rama `refactor/customs-operation-sp16`):**
+
+- `types/operation-dispatch.ts`: `StepName`/`StepId` incluyen `SHIPPER`/`shipper`. `glosa`
+  se conserva en `StepId`/`STEP_LABELS` (no se elimina el tipo) porque sigue siendo un gate
+  real cuyo estado hay que poder leer de `dispatchSteps` para el panel inline — solo se
+  retiró de `DISPATCH_STEPS` (el array que alimenta los tabs navegables). `shipper` se
+  añadió a `DISPATCH_STEPS` entre `pago` y `doda`.
+- `app/(customerPortal)/customs-operation/components/OperationStepsTabs.tsx`: nuevo cálculo
+  `visibleSteps` (filtra `shipper` de `DISPATCH_STEPS` salvo que `dispatchStatus.dispatchSteps`
+  tenga un registro real con `stepName === 'SHIPPER'`) usado en todos los índices/conteos/
+  navegación en vez de la constante estática. Nuevo panel `showGlosaGate`: si el
+  `DispatchStep` de GLOSA está `IN_PROGRESS` (spinner "Validando pedimento…") o `FAILED`
+  (reusa el componente completo `StepGlosa` de `StepPedimento.tsx`, con su
+  `StepErrorAlert` de retry/force-continue ya existente), se muestra entre los tabs
+  Manifestación/Validación sin ser un tab seleccionable. `renderStepContent()` ahora tiene
+  casos reales para `shipper` (nuevo `StepShipper.tsx`) y `modulacion` (nuevo
+  `StepModulacionStatus.tsx`) en vez de `null`. El gate de "Siguiente" que antes miraba
+  `activeStep === 'glosa'` ahora mira `activeStep === 'manifestacion' && (isGlosaFailed ||
+  !pedimentoGlosaCanProceed)`, ya que `glosa` nunca vuelve a ser `activeStep`.
+- `app/(customerPortal)/customs-operation/[id]/page.tsx`: nuevo helper `toVisibleStep()` que
+  mapea `'glosa' → 'manifestacion'` en los tres puntos donde el `currentStep` del backend se
+  usaba para fijar `activeStep` (incluida la inicialización) — evita que el front intente
+  activar un tab que ya no existe cuando el workflow está corriendo GLOSA internamente.
+- `app/(customerPortal)/customs-operation/components/steps/StepShipper.tsx`: reescrito
+  desde cero (mismo archivo, contenido 100% nuevo) contra `dispatchStatus.dispatchSteps`
+  real — ya no lee `dispatchStatus?.dispatch?.steps?.shipper` (forma legacy inexistente en
+  producción). Solo lectura; usa `StepErrorAlert` con `stepType="INTERNAL"` para el caso
+  `FAILED`.
+- `app/(customerPortal)/customs-operation/components/steps/StepModulacionStatus.tsx`
+  (nuevo archivo): solo lectura del estado real del `DispatchStep` MODULACION
+  (`AWAITING_BIFROST`/`FAILED`/`COMPLETED`), usando `StepErrorAlert` con
+  `stepType="EXTERNAL"`.
+- `hooks/useOperationDispatch.ts`: eliminado `completeModulacion` (llamaba al `PATCH`
+  legacy) y su import ahora-innecesario de `DispatchResult`. `VALID_STEP_IDS`/`STEP_LABELS`/
+  `stepOrder` incluyen `shipper`. `totalSteps` dejó de estar hardcodeado en `8` en las dos
+  funciones que lo usaban (`calculateProgress` y el mapeo de `fetchDispatchStatus`) — ahora
+  se calcula como `dispatchSteps.filter(s => s.stepName !== 'GLOSA').length`, reflejando 7 u
+  8 según si SHIPPER aplica para esa operación.
+- Archivos eliminados (`git rm`, confirmados sin importadores antes de borrar):
+  `steps/StepModulacion.tsx`, `steps/StepGlosa.tsx`, `steps/StepGlosa.example.tsx`,
+  `steps/StepVucem.tsx`, `steps/StepPrevalidacion.tsx`,
+  `app/(customerPortal)/customs-operation/components/DispatchMonitor.tsx` (el duplicado sin
+  importadores — se confirmó que `[id]/dispatch/page.tsx` importa el otro,
+  `components/dispatch/DispatchMonitor.tsx`, que se conserva intacto).
+- Verificación: `npx tsc --noEmit -p tsconfig.json` sobre el proyecto completo → 0 errores.
+  `npx eslint` sobre los 6 archivos tocados/nuevos → 0 errores, solo warnings preexistentes
+  de estilo (`no-explicit-any`) más un warning nuevo de `FileCheck` sin usar, corregido en
+  el mismo cambio. No se encontraron tests (`*.spec.ts`/`*.test.ts`) que referencien
+  `useOperationDispatch`, `OperationStepsTabs` ni `DispatchMonitor` — no había specs de
+  front que actualizar para este alcance.
+
+**Desviación documentada — FORCE_CONTINUE en MODULACION:** el D1 rediseñado (sección E)
+sugiere exponer una acción de "forzar resultado" vía `resumeStepSignal`/`FORCE_CONTINUE`
+para MODULACION "si el negocio lo exige". Se verificó en `dispatch.workflow.ts` que
+`FORCE_CONTINUE` está **explícitamente prohibido para steps EXTERNAL** (el branch
+`else` del workflow lo marca `FAILED` y termina el workflow si se intenta) — y
+`operations.service.ts::resumeDispatchStep()` además restringe `FORCE_CONTINUE` a
+`stepName === 'GLOSA'` únicamente, a nivel de validación HTTP. El componente ya existente
+`StepErrorAlert.tsx` (reusado tal cual, sin tocar) ya sabía esto de antes: solo muestra el
+botón de "Forzar Continuación" cuando `stepType === 'INTERNAL'`, y para `EXTERNAL` muestra
+una nota explicando por qué no está disponible. `StepModulacionStatus.tsx` usa
+`stepType="EXTERNAL"`, por lo que MODULACION queda correctamente limitado a "Reintentar"
+(RETRY) — no se intentó forzar una funcionalidad que el propio backend ya impide.
+
+### Verificación end-to-end (Playwright)
+
+**No ejecutada.** Este cliente no tiene `dev_url` configurado en
+`config/clientes.json` y no se levantó un entorno para esta sesión (ver nota operativa del
+cliente). Solo se corrieron las puertas estáticas (typecheck/lint/tests unitarios) en
+ambos repos, documentadas arriba. Queda pendiente validar visualmente: (a) 8 tabs con
+Shipper visible para un pedimento con `liquidacionEfectivo > 2500`, 7 tabs sin él para uno
+menor; (b) el panel de GLOSA aparece/desaparece correctamente sin romper la navegación;
+(c) el webhook de Bifrost sigue resolviendo steps `AWAITING_BIFROST` — no se tocó
+`webhook.controller.ts`, `BifrostClientService` ni `bifrost.health.ts` en ningún momento de
+esta sesión, por lo que no se espera regresión, pero no se verificó en runtime.
+
+### Archivos tocados en esta sesión
+
+Backend: `prisma/schema.prisma`, `prisma/migrations/20260712093255_add_shipper_step_name/`,
+`src/operations/constants/dispatch-steps.constant.ts`,
+`src/operations/services/operations.service.ts`,
+`src/temporal/activities/dispatch.activities.ts`,
+`src/temporal/workflows/dispatch.workflow.ts`,
+`src/operations/controllers/dispatch.controller.ts`,
+`src/operations/controllers/dispatch.controller.spec.ts`.
+
+Front: `types/operation-dispatch.ts`, `hooks/useOperationDispatch.ts`,
+`app/(customerPortal)/customs-operation/components/OperationStepsTabs.tsx`,
+`app/(customerPortal)/customs-operation/[id]/page.tsx`,
+`app/(customerPortal)/customs-operation/components/steps/StepShipper.tsx` (reescrito),
+`app/(customerPortal)/customs-operation/components/steps/StepModulacionStatus.tsx` (nuevo);
+eliminados: `steps/StepModulacion.tsx`, `steps/StepGlosa.tsx`, `steps/StepGlosa.example.tsx`,
+`steps/StepVucem.tsx`, `steps/StepPrevalidacion.tsx`,
+`app/(customerPortal)/customs-operation/components/DispatchMonitor.tsx`.
+
+### Siguiente paso sugerido
+
+1. Un sub-plan corto y acotado ("purga legacy dispatch blob") que resuelva las 3 preguntas
+   de la sección "Hallazgo nuevo" arriba antes de borrar `getDispatchStatus`,
+   `completeModulacion`, `executeStepPublic/executeStep`, `confirmarValidacionCaarem` y los
+   tipos legacy de `dispatch.dto.ts`.
+2. Verificación end-to-end con Playwright cuando haya `dev_url`/entorno disponible para
+   este cliente, cubriendo los 3 puntos de la sección "Verificación end-to-end" arriba.

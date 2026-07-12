@@ -259,39 +259,58 @@ para steps fallidos) en vez de reabrir el endpoint legacy `PATCH dispatch/modula
 
 ## Pasos
 
-- [ ] Migración Prisma: añadir `StepName.SHIPPER`; actualizar `DISPATCH_STEPS_CONFIG` (orden y tipo)
-      en `dispatch-steps.constant.ts`.
-- [ ] `dispatch.workflow.ts`: justo antes de ejecutar PAGO/DODA, resolver el `Pedimento` vinculado,
+- [x] Migración Prisma: añadir `StepName.SHIPPER`; actualizar `DISPATCH_STEPS_CONFIG` (orden y tipo)
+      en `dispatch-steps.constant.ts`. (2026-07-12, vía `npx prisma migrate dev`, migración
+      `20260712093255_add_shipper_step_name`.)
+- [x] `dispatch.workflow.ts`: justo antes de ejecutar PAGO/DODA, resolver el `Pedimento` vinculado,
       calcular `liquidacionEfectivo > 2500 USD` e insertar dinámicamente el `DispatchStep` de SHIPPER
-      (tipo `INTERNAL`) solo si aplica.
-- [ ] `dispatch.workflow.ts`/`dispatch.activities.ts`: confirmar que `ORDERED_STEPS`/el render del
+      (tipo `INTERNAL`) solo si aplica. (2026-07-12.)
+- [x] `dispatch.workflow.ts`/`dispatch.activities.ts`: confirmar que `ORDERED_STEPS`/el render del
       stepper se derivan de los `DispatchStep`s ya creados en DB para esa operación (no de una lista
       estática fijada al inicio), de modo que el front pueda ver crecer el stepper de 7 a 8 pasos en
-      caliente cuando se inserta SHIPPER.
-- [ ] `dispatch.workflow.ts`: implementar SHIPPER como step `INTERNAL` (sin llamada a Bifrost, sin
-      espera de webhook) con la lógica real de asignación que corresponda.
-- [ ] Purga backend: eliminar `DispatchController.startDispatch`, `getDispatchStatus` (legacy),
-      `completeModulacion`; eliminar `OperationDispatchService.completeModulacion/completeShipper/
-      getDispatchStatus` (legacy) y tipos legacy en `dispatch.dto.ts` (`DispatchStepId`,
-      `OperationDispatchMetadata`, `*Data` solo-legacy). Evaluar fusión de `abortStep` con
-      `resume`/`cancel` de `OperationsController`.
-- [ ] Front: quitar `glosa` de `DISPATCH_STEPS`/`StepId`/`STEP_LABELS`; añadir `shipper` condicional
+      caliente cuando se inserta SHIPPER. (2026-07-12: confirmado — `getDispatchStatusNew` ya lee
+      `operation.dispatchSteps` reales de DB; el front filtra dinámicamente vía
+      `dispatchStatus.dispatchSteps` (ver `OperationStepsTabs.tsx::visibleSteps`). El workflow sigue
+      iterando `ORDERED_STEPS` como orden de ejecución fijo — eso es correcto y no necesita ser
+      dinámico, solo la creación/presencia del `DispatchStep` de SHIPPER lo es.)
+- [x] `dispatch.workflow.ts`: implementar SHIPPER como step `INTERNAL` (sin llamada a Bifrost, sin
+      espera de webhook) con la lógica real de asignación que corresponda. (2026-07-12:
+      `processShipperStep` implementado como checkpoint de auditoría/visibilidad — ver desviación
+      documentada en el manifiesto, no había regla de negocio adicional especificada más allá del
+      umbral que ya decide su creación.)
+- [~] Purga backend: eliminar `DispatchController.startDispatch` (2026-07-12, hecho — duplicado
+      inalcanzable confirmado). `getDispatchStatus` (legacy), `completeModulacion` y los tipos legacy
+      de `dispatch.dto.ts` **NO se eliminaron** — investigación (2026-07-12) encontró que
+      `getDispatchStatus` sostiene la ruta viva `regenerate-pedimento`, que `completeModulacion`/
+      `executeStepPublic` son rutas HTTP en vivo también basadas en el blob legacy (no solo las 3
+      métodos que el D1 asumía), y que `confirmarValidacionCaarem` podría ser un webhook externo de
+      Bifrost configurado fuera de este repo — no se puede confirmar que esté muerto solo con grep.
+      Ver manifiesto para el detalle y la recomendación de un sub-plan de purga dedicado.
+- [x] Front: quitar `glosa` de `DISPATCH_STEPS`/`StepId`/`STEP_LABELS`; añadir `shipper` condicional
       (filtrado dinámico en `OperationStepsTabs.tsx` según presencia real en `dispatchStatus.dispatchSteps`).
-- [ ] Front: crear `StepShipper.tsx` nuevo contra la forma real de `dispatchStatus.dispatchSteps`.
-- [ ] Front: implementar contenido real para `modulacion` en `renderStepContent()` (solo lectura +
-      forzar continuar ante fallo, sin formulario legacy VERDE/ROJO).
-- [ ] Front: panel de error inline para el step interno GLOSA (discrepancias), sin tab dedicado;
+      (2026-07-12.)
+- [x] Front: crear `StepShipper.tsx` nuevo contra la forma real de `dispatchStatus.dispatchSteps`.
+      (2026-07-12: se reescribió el archivo existente por completo, contenido 100% nuevo.)
+- [x] Front: implementar contenido real para `modulacion` en `renderStepContent()` (solo lectura +
+      forzar continuar ante fallo, sin formulario legacy VERDE/ROJO). (2026-07-12: nuevo
+      `StepModulacionStatus.tsx`, solo lectura; ver desviación documentada en el manifiesto sobre
+      FORCE_CONTINUE en steps EXTERNAL.)
+- [x] Front: panel de error inline para el step interno GLOSA (discrepancias), sin tab dedicado;
       quitar `StepPedimento`/`StepGlosa` de la navegación de tabs pero conservar su lógica de
-      renderizado de discrepancias como panel condicional.
-- [ ] Front: quitar `completeModulacion` (PATCH legacy) de `useOperationDispatch.ts`; usar
-      `resume`/`FORCE_CONTINUE` para intervención manual sobre MODULACION si aplica.
-- [ ] Eliminar archivos muertos confirmados: `steps/StepShipper.tsx` (viejo), `steps/StepModulacion.tsx`,
+      renderizado de discrepancias como panel condicional. (2026-07-12.)
+- [x] Front: quitar `completeModulacion` (PATCH legacy) de `useOperationDispatch.ts`; usar
+      `resume`/`FORCE_CONTINUE` para intervención manual sobre MODULACION si aplica. (2026-07-12:
+      FORCE_CONTINUE no aplica a MODULACION por ser EXTERNAL — ver manifiesto; solo RETRY vía
+      `StepErrorAlert`.)
+- [x] Eliminar archivos muertos confirmados: `steps/StepShipper.tsx` (viejo), `steps/StepModulacion.tsx`,
       `steps/StepGlosa.tsx`, `StepGlosa.example.tsx`, `StepVucem.tsx`, `StepPrevalidacion.tsx`,
-      `app/(customerPortal)/customs-operation/components/DispatchMonitor.tsx`.
+      `app/(customerPortal)/customs-operation/components/DispatchMonitor.tsx`. (2026-07-12.)
 - [ ] Verificación end-to-end: iniciar un despacho con pedimento > $2,500 USD (aparece Shipper, 8
       tabs) y uno ≤ $2,500 (7 tabs, sin Shipper); confirmar que GLOSA sigue bloqueando internamente
       ante discrepancias (sin tab, con panel de error); confirmar que el webhook de Bifrost
-      (`/api/webhooks/bifrost`) sigue resolviendo steps `AWAITING_BIFROST` sin cambios.
+      (`/api/webhooks/bifrost`) sigue resolviendo steps `AWAITING_BIFROST` sin cambios. **Pendiente**
+      — sin `dev_url`/entorno levantado para este cliente; solo se corrieron puertas estáticas
+      (tsc/eslint/jest) en ambos repos, ver manifiesto.
 
 ## Riesgos y side effects
 
