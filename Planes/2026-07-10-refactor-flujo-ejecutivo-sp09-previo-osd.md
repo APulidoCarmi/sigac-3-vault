@@ -30,9 +30,9 @@ su resultado** y **puede solicitarlo**. Origen: glosario "Previo" del
 - El reporte de OS&D (lo genera almacén durante el Previo).
 
 ## Pasos
-- [ ] Convertir `OSDReportForm` en vista de consulta (solo lectura) y unificar nomenclatura.
-- [ ] Crear el tab Previo (estatus + resultado de consistencia Zeus vs docs/DGO).
-- [ ] Crear el modal Solicitar Previo (destino según tráfico).
+- [x] Convertir `OSDReportForm` en vista de consulta (solo lectura) y unificar nomenclatura.
+- [x] Crear el tab Previo (estatus + resultado de consistencia Zeus vs docs/DGO).
+- [x] Crear el modal Solicitar Previo (destino según tráfico).
 
 ## Riesgos y side effects
 - La consistencia contra el Previo también alimenta el Expediente (SP-04) y el DGO
@@ -43,4 +43,7 @@ su resultado** y **puede solicitarlo**. Origen: glosario "Previo" del
   del Previo y solicitarlo al destino correcto según tráfico; sin errores de consola.
 
 ## Estado
-📋 Por implementar.
+✅ Implementado (2026-07-12). Diff sin commitear en `refactor/customs-operation-sp09`
+(digital y odin) para revisión humana. Ver manifiesto para desviaciones documentadas
+(copy de botón en `ReferenceShipmentsTerrestre.tsx` sin actualizar, tipo de cita
+"PREVIO" legacy sin reconciliar, Playwright pendiente de correr sin entorno levantado).
