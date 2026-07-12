@@ -355,35 +355,35 @@ referencias — ver Riesgos).
   `assertInvoicesGlossedOk`).
 
 ## Pasos
-- [ ] Migración Prisma: `MompConfiguration.requiresSignedLetters` +
+- [x] Migración Prisma: `MompConfiguration.requiresSignedLetters` +
       `signedLettersDeadlineDays`.
-- [ ] Migración Prisma: modelo `ReferenceLetter` + enum `ReferenceLetterStatus`
+- [x] Migración Prisma: modelo `ReferenceLetter` + enum `ReferenceLetterStatus`
       + relación con `Reference` y `ReferenceDocument`.
-- [ ] Migración Prisma: agregar `CARTA_FIRMA` a `Referencedocumenttype` (schema
+- [x] Migración Prisma: agregar `CARTA_FIRMA` a `Referencedocumenttype` (schema
       + DTO espejo `ReferenceDocumentType`).
-- [ ] Migración Prisma: modelo `UnidentifiedWaybill` + enum
+- [x] Migración Prisma: modelo `UnidentifiedWaybill` + enum
       `UnidentifiedWaybillStatus` + relaciones con `Shipment`/`Reference`.
-- [ ] `ReferenceDocumentsService`: CRUD de `ReferenceLetter` (crear solicitud,
+- [x] `ReferenceDocumentsService`: CRUD de `ReferenceLetter` (crear solicitud,
       marcar enviada, marcar firmada + linkear `ReferenceDocument` digitalizado)
       + endpoint `letters/pending`.
-- [ ] `ReferenceDocumentsService.assertSignedLettersOk` + wiring en
+- [x] `ReferenceDocumentsService.assertSignedLettersOk` + wiring en
       `reglosaExpediente`, `canStartOperation` y `OperationsService.create`
       (junto a `assertInvoicesGlossedOk` existente).
-- [ ] `BolReconciliationService`: persistir `UnidentifiedWaybill` en rama
+- [x] `BolReconciliationService`: persistir `UnidentifiedWaybill` en rama
       `no_match` (y en las ramas `manual_review` que hoy solo loguean) en
       vez de descartar.
-- [ ] `DocumentProcessorService`: agregar case AWB (`match_shipment` +
+- [x] `DocumentProcessorService`: agregar case AWB (`match_shipment` +
       `extractAwbFields`).
-- [ ] Generalizar reconciliation por `trackingType` (BOL/AWB) contra
+- [x] Generalizar reconciliation por `trackingType` (BOL/AWB) contra
       `ShipmentTrackingNumber`, sin tocar el lado `Appointment` (terrestre-only).
-- [ ] Endpoints `unidentified-waybills`: listar pendientes, `link-existing`,
+- [x] Endpoints `unidentified-waybills`: listar pendientes, `link-existing`,
       `create-reference`.
-- [ ] `ReferenceDocumentsService`/controller: endpoint agregado
+- [x] `ReferenceDocumentsService`/controller: endpoint agregado
       `pending-panel` (checklist + glosaStatus + cartas + Previo + folios).
-- [ ] Front: sección Inbox — "esperan a terceros" (clasificación, Previo,
+- [x] Front: sección Inbox — "esperan a terceros" (clasificación, Previo,
       arribo, cartas sin firmar, por identificar).
-- [ ] Front: panel de pendientes agregado (resumen + detalle por referencia).
-- [ ] Front: sección "Guías sin identificar" con modal de reconocimiento
+- [x] Front: panel de pendientes agregado (resumen + detalle por referencia).
+- [x] Front: sección "Guías sin identificar" con modal de reconocimiento
       (ligar a existente / crear referencia vía wizard SP-02 con prefill de
       `clientId`).
 
@@ -416,10 +416,13 @@ referencias — ver Riesgos).
   la carta `SIGNED`, ambos proceden.
 
 ## Estado
-✍️ Redactado — listo para /implementa (2026-07-12). D1 corregido con las 4
-piezas resueltas (pieza 1 explícitamente diferida/fuera de alcance; piezas
-2-3-4 traducidas a diseño técnico concreto y verificadas contra el código
-real de `refactor/customs-operation-sp18`). Sin preguntas de producto
-abiertas. Manifiesto de diagnóstico:
-`Planes/.manifiestos/2026-07-10-refactor-flujo-ejecutivo-sp17-bandeja-entrada.md`
-(mantenerlo como historial del bloqueo original, no editarlo).
+✅ Cerrado (2026-07-12) — piezas 2, 3 y 4 implementadas completas en ambos
+repos, sobre `refactor/customs-operation-sp17-v2` (encadenada desde
+`refactor/customs-operation-sp16`). Pieza 1 (tabs automático/temporal/avanzado)
+sigue diferida sin implementar, tal como pedía el D1. Gate estático verde en
+ambos repos (odin: 528/528 test suites, 3494 tests; digital: `tsc`/`next build`
+0 errores, `next lint` sin errores nuevos, 88/88 tests propios). Playwright
+pendiente de sesión humana (transversal a todo el paraguas). Ver la sección
+"Intento 2026-07-12" del manifiesto para detalle de diseño, desviaciones
+documentadas (agregación cross-referencia de Previo/clasificación no
+construida, fuera de los Pasos declarados) y archivos tocados.
