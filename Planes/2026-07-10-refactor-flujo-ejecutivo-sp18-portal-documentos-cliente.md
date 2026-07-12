@@ -30,10 +30,10 @@ internos, búsqueda por orden de compra, descarga "expediente completo" ZIP).
 - El motor de glosado en sí (SP-04); aquí se consume su resultado.
 
 ## Pasos
-- [ ] URL pública + carga de documentos → Expediente (marcado "subido por el cliente").
-- [ ] Reflejar el resultado del glosado al cliente (válido/error/pendiente) y totales.
-- [ ] Búsqueda por orden de compra.
-- [ ] Descarga de "expediente completo" (ZIP).
+- [x] URL pública + carga de documentos → Expediente (marcado "subido por el cliente").
+- [x] Reflejar el resultado del glosado al cliente (válido/error/pendiente) y totales.
+- [x] Búsqueda por orden de compra.
+- [x] Descarga de "expediente completo" (ZIP).
 
 ## Riesgos y side effects
 - **Externo/público (outward-facing):** confirmar seguridad de la URL pública (tokens,
@@ -44,5 +44,13 @@ internos, búsqueda por orden de compra, descarga "expediente completo" ZIP).
   verlo aparecer en el Expediente marcado "subido por el cliente" con su feedback de
   glosado, y descargar el ZIP; sin errores de consola.
 
+### Estado de verificación (2026-07-12)
+- Gate estático: ✅ verde en ambos repos (tsc, eslint, jest — ver manifiesto).
+- Playwright E2E: ⏸️ pendiente — no se ejecutó en esta sesión por falta de datos
+  sembrados (compañía cliente + referencia con OC de prueba) para recorrer el flujo
+  real; el flujo se validó por inspección de código y tests unitarios/build. Ver
+  manifiesto para detalle.
+
 ## Estado
-📋 Por implementar.
+✅ Implementado (backend + frontend), pendiente validación Playwright E2E con datos
+de prueba reales. Ver manifiesto para detalle de diseño y desviaciones.
