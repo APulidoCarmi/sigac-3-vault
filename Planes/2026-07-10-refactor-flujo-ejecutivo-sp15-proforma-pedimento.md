@@ -24,8 +24,8 @@ Pantalla #24 del [[Inventario_Pantallas_v3]] (🟢 ya existe). Revisar el pedime
 - Generación del pedimento (vive en la Operación/DGO).
 
 ## Pasos
-- [ ] Verificar que el viewer refleja los datos del DGO y renombres.
-- [ ] Eliminar `PedimentoProformaDocument.tsx`, `PedimentoHbsDocument.tsx`,
+- [x] Verificar que el viewer refleja los datos del DGO y renombres.
+- [x] Eliminar `PedimentoProformaDocument.tsx`, `PedimentoHbsDocument.tsx`,
       `ReferencePedimento.tsx`.
 
 ## Riesgos y side effects
@@ -36,4 +36,5 @@ Pantalla #24 del [[Inventario_Pantallas_v3]] (🟢 ya existe). Revisar el pedime
   proforma/pedimento de una operación y ver el Anexo 22; sin errores de consola.
 
 ## Estado
-📋 Por implementar.
+✅ Implementado. Ver manifiesto:
+[[.manifiestos/2026-07-10-refactor-flujo-ejecutivo-sp15-proforma-pedimento]].
