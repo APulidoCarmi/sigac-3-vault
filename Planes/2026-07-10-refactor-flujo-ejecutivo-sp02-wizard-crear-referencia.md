@@ -43,7 +43,7 @@ del [[Documento_Entendimiento_SIGAC3_Ejecutivo_v2]]. Relacionado con
 - [x] Reducir el wizard a 3 pasos; retirar el paso "Documentos Comerciales". (componente no borrado, queda para SP-05)
 - [x] Añadir campo "orden de compra". (código completo; migración Prisma bloqueada, ver manifiesto)
 - [x] Soportar los dos sabores (cliente / ejecutivo). (vía `user.IsInternalUser`; validar con negocio)
-- [x] Eliminar `reference-stepper/index.tsx`; resolver stepChecklistGlosa/stepInvoicesReference. (stepper eliminado; los otros dos quedan como decisión abierta, no cableados)
+- [x] Eliminar `reference-stepper/index.tsx`; resolver stepChecklistGlosa/stepInvoicesReference. (stepper eliminado en su momento; en el cierre 2026-07-12 se confirmó y eliminó también stepChecklistGlosa y stepInvoicesReference, ambos código muerto)
 
 ## Riesgos y side effects
 - Confirmar la versión de extracción correcta (v1 `/api/workflow/process` vs v3)
@@ -56,8 +56,12 @@ del [[Documento_Entendimiento_SIGAC3_Ejecutivo_v2]]. Relacionado con
 - Playwright: NO ejecutado (bloqueo de migración impide levantar el flujo completo).
 
 ## Estado
-🟡 Parcialmente implementado — bloqueo de infraestructura en la migración Prisma
+🟡 Cierre parcial (2026-07-12) — quedan resueltas las dos decisiones de
+producto pendientes (ver manifiesto): distinción cliente/ejecutivo
+confirmada por el usuario (usa `user.IsInternalUser`, sin cambios de
+código); `stepChecklistGlosa` y `stepInvoicesReference` eliminados por
+código muerto confirmado. Sigue abierto únicamente el bloqueo de
+infraestructura en la migración Prisma del campo "orden de compra"
 (historial de migraciones inconsistente en el entorno, ver manifiesto en
-`.manifiestos/2026-07-10-refactor-flujo-ejecutivo-sp02-wizard-crear-referencia.md`).
-Decisiones abiertas: distinción cliente/ejecutivo sin validar con negocio;
-destino de `stepChecklistGlosa`/`stepInvoicesReference` sin resolver.
+`.manifiestos/2026-07-10-refactor-flujo-ejecutivo-sp02-wizard-crear-referencia.md`)
+— no depende de este sub-plan, requiere decisión humana sobre el entorno.

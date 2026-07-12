@@ -56,17 +56,63 @@ Estado: **parcialmente completado** — bloqueo real en la migración Prisma
    de borrar, según regla del proyecto.
 
 ## Desviaciones y decisiones abiertas (requieren confirmación humana)
-- **Distinción cliente/ejecutivo (tarea 4)**: se infirió a partir de
-  `user.IsInternalUser`, que no estaba cableado a ninguna vista previamente.
-  Es una inferencia razonable pero NO una decisión de producto confirmada —
-  validar con negocio antes de dar la tarea por cerrada.
-- **`stepChecklistGlosa` y `stepInvoicesReference`**: confirmado que no están
-  cableados al wizard actual; no se decidió integrarlos ni eliminarlos por
-  falta de certeza sobre su necesidad en el flujo de 3 pasos. Quedan
-  intactos, sin usar. Pendiente de decisión.
 - **`stepCommercialDocsReference`**: queda en el repo sin cablear al wizard
   (no es código muerto: material para SP-05). No tocar su implementación
   interna, solo su desconexión del wizard ya se hizo aquí.
+
+## Cierre 2026-07-12 — decisiones validadas por el usuario
+
+1. **Distinción cliente/ejecutivo (tarea 4)**: el usuario confirmó que
+   `user.IsInternalUser` es el criterio correcto para distinguir el sabor
+   cliente vs. ejecutivo del wizard. No se requirió ningún cambio de código:
+   se verificó que `stepBasicDataReference/index.tsx:67` sigue leyendo
+   `user?.user?.IsInternalUser` tal como quedó implementado. Decisión cerrada.
+
+2. **`stepChecklistGlosa`**: **eliminado**. Razón confirmada por el usuario:
+   la glosa se está retirando del proceso automático de operación (Decisión
+   #5 del paraguas — el paso GLOSA desaparece del stepper de despacho; la
+   glosa la asume el DGO a nivel de referencia, ya implementado en
+   SP-04/SP-05). Este step del wizard de creación queda obsoleto y redundante
+   con ese modelo nuevo.
+   - Eliminado: `app/(customerPortal)/references/createReference/components/stepChecklistGlosa/`
+     (incluye `index.tsx` y `components/step4-checklist-glosa.tsx`,
+     `components/traffic-light.tsx`).
+   - Eliminado también `lib/schemas/new-reference-checklist-glosa.ts` — schema
+     exclusivo de ese step, sin más referencias en el repo (confirmado por
+     grep antes de borrar).
+
+3. **`stepInvoicesReference`**: **eliminado**. Se investigó primero si algo
+   del flujo actual (SP-01/SP-02/SP-04/SP-05 ya implementados) dependía de
+   este step o de su export `StepInvoicesReference`; grep en todo el repo
+   (excluyendo `node_modules`/`.next`) no encontró ninguna referencia externa
+   a `stepInvoicesReference`, a `StepInvoicesReference` ni a su tipo
+   `Factura` fuera del propio archivo. Código muerto confirmado.
+   - Eliminado: `app/(customerPortal)/references/createReference/components/stepInvoicesReference/index.tsx`.
+
+### Archivos tocados en este cierre (front, `carmi-digital`)
+- Eliminados (git rm):
+  - `app/(customerPortal)/references/createReference/components/stepChecklistGlosa/index.tsx`
+  - `app/(customerPortal)/references/createReference/components/stepChecklistGlosa/components/step4-checklist-glosa.tsx`
+  - `app/(customerPortal)/references/createReference/components/stepChecklistGlosa/components/traffic-light.tsx`
+  - `app/(customerPortal)/references/createReference/components/stepInvoicesReference/index.tsx`
+  - `lib/schemas/new-reference-checklist-glosa.ts`
+- Sin cambios de código (solo verificación): `stepBasicDataReference/index.tsx`
+  (criterio `IsInternalUser` confirmado, ya correcto).
+
+### Verificación del cierre
+- **Front**: `npx tsc --noEmit` — sin errores nuevos (los 4 errores presentes
+  son preexistentes y no relacionados: módulos `three` y `mammoth` faltantes
+  en `features/locations/warehouse/components/Trailer3D.tsx` y
+  `features/zeus-shell/components/Renderers/DocxRenderer.tsx`).
+  `npx eslint` sobre los archivos tocados — 0 errores nuevos, solo warnings
+  preexistentes (`any`/variables no usadas).
+- **Playwright**: NO ejecutado — sigue sin resolverse el bloqueo de
+  migración Prisma del entorno (campo OC, ver sección de bloqueo abajo), que
+  impide levantar el flujo de creación de referencia contra un backend
+  funcional. Pendiente de correr una vez resuelto ese bloqueo.
+- **Bloqueo de migración Prisma**: sigue abierto, sin cambios en este cierre
+  (fuera del alcance de esta sesión — requiere decisión humana sobre el
+  entorno, ver sección debajo).
 
 ## Bloqueo: migración Prisma (tarea 3, campo OC)
 `npx prisma migrate dev --name add-purchase-order-to-reference` falla con
@@ -98,6 +144,7 @@ correctamente versionada.
   una vez resuelto el historial de migraciones y con el entorno levantado.
 
 ## Estado del sub-plan
-Actualizar el sub-plan: tareas 1, 2, 5 completas; tarea 3 completa en
-código pero con migración bloqueada (infraestructura); tarea 4 completa con
-decisión de rol pendiente de validar.
+Tareas 1, 2, 5 completas; tarea 4 completa y validada por el usuario
+(2026-07-12); tarea 3 completa en código, con migración bloqueada
+(infraestructura, sin resolver en este cierre). Sub-plan queda 🟡 solo por
+ese bloqueo de migración, ajeno al código de este sub-plan.
