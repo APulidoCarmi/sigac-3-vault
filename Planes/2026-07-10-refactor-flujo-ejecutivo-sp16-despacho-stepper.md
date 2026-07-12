@@ -2,6 +2,18 @@
 
 Parte de [[2026-07-10-refactor-flujo-ejecutivo]].
 
+## Historial de esta sección (no borrar el rastro)
+
+- **2026-07-12, primer intento de `/implementa`:** se detuvo en fase de diseño/verificación
+  porque el D1 (abajo) da por buenas premisas que la auditoría del código real invalida o
+  matiza de forma material: el gate de glosa del DGO (SP-05) no cubre el arranque de
+  despacho (solo creación con DGOs); "revivir" Shipper/Modulación en realidad choca con dos
+  sistemas de despacho backend paralelos y desconectados (Temporal/`DispatchStep` vivo vs.
+  legacy `DispatchStepId`/JSON blob); y la duplicación de controllers es más profunda de lo
+  descrito (duplicado interno en `DispatchController` además de la colisión cruzada).
+  Diagnóstico completo, decisiones pendientes y siguiente paso sugerido en el manifiesto
+  `Planes/.manifiestos/2026-07-10-refactor-flujo-ejecutivo-sp16-despacho-stepper.md`.
+
 ## Contexto
 
 Pantalla #25 del [[Inventario_Pantallas_v3]] (🟡 modificar). El despacho es un stepper
@@ -63,4 +75,6 @@ desaparece** (→ 7 pasos; la asume el DGO a nivel referencia); **Shipper (>2,50
   de consola.
 
 ## Estado
-📋 Por implementar.
+🚧 Bloqueado (2026-07-12) — D1 desactualizado/inválido en puntos materiales; ver
+diagnóstico completo y decisiones pendientes en
+`Planes/.manifiestos/2026-07-10-refactor-flujo-ejecutivo-sp16-despacho-stepper.md`.

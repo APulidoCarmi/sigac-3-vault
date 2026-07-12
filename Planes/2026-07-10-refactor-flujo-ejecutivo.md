@@ -183,7 +183,7 @@ sub-plan propio: viven dentro de SP-05 (DGO).
 - [[2026-07-10-refactor-flujo-ejecutivo-sp16-despacho-stepper]] — Stepper de despacho: validar 8 pasos, retirar GLOSA, Shipper propio (#25). 📋
 
 ### Fase 4 — Entrada y cliente
-- [[2026-07-10-refactor-flujo-ejecutivo-sp17-bandeja-entrada]] — Bandeja de Entrada / Inbox (#1). 📋
+- [[2026-07-10-refactor-flujo-ejecutivo-sp17-bandeja-entrada]] — Bandeja de Entrada / Inbox (#1). 🚧 Bloqueado (2026-07-12): D1 desactualizado/inválido en 3 de 4 piezas (tabs automático/temporal/avanzado, cartas sin firmar, guías sin identificar — ninguna existe como dato en ningún repo, requieren decisión de producto). Sin código. Ver manifiesto.
 - [[2026-07-10-refactor-flujo-ejecutivo-sp18-portal-documentos-cliente]] — Portal de Documentos del Cliente (#26). 📋
 
 ## Riesgos y side effects transversales

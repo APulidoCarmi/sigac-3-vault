@@ -35,4 +35,11 @@ German"). Punto de arranque del día del ejecutivo. Origen:
   categoría y ligar una guía sin identificar; sin errores de consola.
 
 ## Estado
-📋 Por implementar.
+🚧 Bloqueado (2026-07-12) — el D1 está desactualizado/inválido en 3 de sus 4
+piezas (tabs automático/temporal/avanzado, cartas sin firmar N días, guías
+sin identificar): no existe modelo de dominio para ninguna de ellas en
+ningún repo, y requieren decisiones de producto no tomadas antes de poder
+implementarse (no es un gap de UI, es ausencia de dato). La 4ª pieza
+(auditoría CEUS) es viable pero requiere construir una capa de agregación
+nueva no dimensionada en el D1. Sin código escrito. Diagnóstico completo y
+recomendación para desbloquear en el manifiesto (`Planes/.manifiestos/2026-07-10-refactor-flujo-ejecutivo-sp17-bandeja-entrada.md`).
