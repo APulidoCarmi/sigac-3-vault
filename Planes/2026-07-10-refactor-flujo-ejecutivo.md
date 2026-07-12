@@ -169,7 +169,7 @@ sub-plan propio: viven dentro de SP-05 (DGO).
 - [[2026-07-10-refactor-flujo-ejecutivo-sp06-wizard-operacion-dgo]] — Wizard Operación 4 pasos → Step 0 DGO (#21). ✅ Cerrado (2026-07-12), tercer paso tras el bloqueo inicial y el replanteo: Step 0 real (`StepDgoSelection.tsx`) construido desde cero con soporte multi-DGO/multi-referencia (régimen aduanero homogéneo validado en back y front), migración `dgoId` en `OperationPedimento` (CLI), `POST /operations` conecta cada pedimento a la referencia real de su DGO, bloqueo de edición de DGO ya vinculado, cálculo de impuestos (TaxEngine) cableado en el Step de Despacho, bloqueo de glosa (`can-start-operation`) antes de crear la operación, y limpieza del código huérfano (`PedimentoWizardContext`, `StepInventorySelection`, `reference-selection/`, `hooks/`). Ver manifiesto para limitaciones documentadas (prellenado por-grupo parcial, `next build` bloqueado por dependencias preexistentes no relacionadas).
 
 ### Fase 2 — Movimientos y logística
-- [[2026-07-10-refactor-flujo-ejecutivo-sp07-tab-movimientos-por-trafico]] — Tab Movimientos rediseño por tráfico + vínculo flexible DGO (#8; reusa #14/#15/#17). 📋
+- [[2026-07-10-refactor-flujo-ejecutivo-sp07-tab-movimientos-por-trafico]] — Tab Movimientos rediseño por tráfico + vínculo flexible DGO (#8; reusa #14/#15/#17). ✅ Cerrado (2026-07-11): `ReferenceShipments.tsx` pasó a ser un router delgado por `reference.trafficType.code` (nuevo campo expuesto en `ReferenceDetail`) que reusa sin cambios el flujo terrestre ya existente (renombrado a `ReferenceShipmentsTerrestre.tsx`) y deja un placeholder explícito para aéreo/marítimo (SP-10/SP-11). Trazabilidad DGO↔movimiento nueva de punta a punta (no existía): backend resuelve `Shipment → InvoiceShipmentLink → Invoice.dgoId → Dgo` deduplicado en `GET /shipments/reference/:referenceId`, front pinta badges "DGO-N" por movimiento. Ambos repos, gate estático verde, Playwright pendiente de sesión humana.
 - [[2026-07-10-refactor-flujo-ejecutivo-sp08-recinto]] — Recinto (solo lectura) por tráfico (#12). 📋
 - [[2026-07-10-refactor-flujo-ejecutivo-sp09-previo-osd]] — Previo tab + Solicitar Previo + OS&D consulta (#12b, #20b, #16). 📋
 - [[2026-07-10-refactor-flujo-ejecutivo-sp10-movimientos-aereo]] — Manifiestos + Revalidación + Asignación Transporte aéreo (#20, #18, #19). 📋
@@ -255,6 +255,11 @@ multi-referencia/multi-DGO). Cadena de ramas encadenada sin cortes:
 SP-03 → SP-01 → SP-02 → SP-04 → SP-05 → SP-06, diff acumulado sin commitear en
 ambos repos (`carmi-digital`, `carmi-odin-api-v2`), rama compartida
 `refactor/customs-operation-sp06`.
+
+**Fase 2 iniciada:** SP-07 (tab Movimientos por tráfico) ✅ cerrado
+(2026-07-11), primer hijo transversal de Fase 2. Cadena de ramas extendida:
+...→ SP-06 → SP-07 (`refactor/customs-operation-sp07`, ambos repos), diff
+acumulado sin commitear.
 
 Pendiente transversal (todas las fases): **validación Playwright end-to-end de
 principio a fin sigue pendiente de sesión humana** — ningún sub-plan de Fase 1

@@ -35,9 +35,9 @@ tráfico; vínculo Movimiento↔DGO **flexible, no 1 a 1**). Cubre el reuso de #
 - La creación de la operación desde movimientos (ya no aplica; se crea desde DGO, SP-06).
 
 ## Pasos
-- [ ] Adaptar el tab para renderizar el set de movimientos correcto según tráfico.
-- [ ] Reusar Entrada/Subdivisión/Transferir para terrestre importación (ya existen).
-- [ ] Mostrar el vínculo flexible DGO↔movimiento (trazabilidad, no regla fija).
+- [x] Adaptar el tab para renderizar el set de movimientos correcto según tráfico.
+- [x] Reusar Entrada/Subdivisión/Transferir para terrestre importación (ya existen).
+- [x] Mostrar el vínculo flexible DGO↔movimiento (trazabilidad, no regla fija).
 
 ## Riesgos y side effects
 - Depende del modelo de vínculo DGO↔movimiento definido en SP-05.
@@ -48,4 +48,9 @@ tráfico; vínculo Movimiento↔DGO **flexible, no 1 a 1**). Cubre el reuso de #
   errores de consola.
 
 ## Estado
-📋 Por implementar.
+✅ Cerrado (2026-07-11). Ramas `refactor/customs-operation-sp07` en ambos repos
+(digital y odin), encadenada desde `sp06`, diff sin commitear. Gate estático
+verde en ambos repos (tsc/eslint sin errores en los archivos tocados, tests de
+`shipments.service`/`shipments.controller` en verde). Playwright pendiente de
+sesión humana (sin `dev_url` configurado para este cliente). Ver manifiesto
+para detalle de archivos y decisiones.
