@@ -53,4 +53,12 @@ NO sobre el de 6 pasos `components/operations/CreateOperationModal.tsx` (ese est
   pedimentos, config prellenada del DGO, impuestos calculados; sin errores de consola.
 
 ## Estado
-📋 Por implementar.
+🚧 Bloqueado — el D1 describe archivos/flujo que no corresponden al wizard real
+(`page.tsx` Step 0 es un placeholder sin implementar, no `StepInventorySelection`;
+`PedimentoWizardContext.tsx` es código huérfano nunca montado; no hay "cálculo de
+impuestos comentado" que reactivar — el TaxEngine real vive solo en el módulo fuera de
+alcance `components/operations/**`). Detalle completo, hallazgos y recomendación de
+qué resolver en una nueva ronda de `/plan` en el manifiesto:
+[[2026-07-10-refactor-flujo-ejecutivo-sp06-wizard-operacion-dgo]] (ver
+`Planes/.manifiestos/`). Ningún paso `- [ ]` se marcó como hecho; no se escribió código
+de producto. Rama `refactor/customs-operation-sp06` creada en `carmi-digital` (vacía).

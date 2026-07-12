@@ -164,9 +164,9 @@ sub-plan propio: viven dentro de SP-05 (DGO).
 - [[2026-07-10-refactor-flujo-ejecutivo-sp03-detalle-shell-menu-lateral]] — Shell del detalle + menú lateral + Resumen (#4, #13). Transversal, va primero. ✅ Cerrado (2026-07-11, rehecho desde cero): nueva rama `refactor/customs-operation-sp03` en `carmi-digital` partiendo de `test`, diff sin commitear para revisión humana.
 - [[2026-07-10-refactor-flujo-ejecutivo-sp01-listado-referencias]] — Listado de Referencias + tabla clásica (#2). 📋 Reabierto (2026-07-11): mismas ramas `refactor/customs-operation-sp01` descartadas y eliminadas en digital y odin.
 - [[2026-07-10-refactor-flujo-ejecutivo-sp02-wizard-crear-referencia]] — Wizard 3 pasos (#3). 📋
-- [[2026-07-10-refactor-flujo-ejecutivo-sp04-expediente-aduanero]] — Expediente + glosado Zeus/CEUS (#5). 📋
-- [[2026-07-10-refactor-flujo-ejecutivo-sp05-dgo-datos-glosados]] — DGO, fuente única de verdad (#6; absorbe #7/#9/#10). 📋
-- [[2026-07-10-refactor-flujo-ejecutivo-sp06-wizard-operacion-dgo]] — Wizard Operación 4 pasos → Step 0 DGO (#21). 📋
+- [[2026-07-10-refactor-flujo-ejecutivo-sp04-expediente-aduanero]] — Expediente + glosado Zeus/CEUS (#5). ✅ Cerrado (2026-07-12, implementado junto con SP-05 en el mismo subagente por su dependencia circular — ver manifiestos de ambos). Ramas `refactor/customs-operation-sp05` (digital y odin, encadenada desde `sp04`), diff sin commitear.
+- [[2026-07-10-refactor-flujo-ejecutivo-sp05-dgo-datos-glosados]] — DGO, fuente única de verdad (#6; absorbe #7/#9/#10). ✅ Cerrado (2026-07-12). Reducciones de alcance documentadas en su manifiesto: filtrado por DGO en endpoints heredados de Mercancía/Gastos/Identificadores pendiente para N>1 DGO, indicador de consistencia vs Previo y MV electrónica fuera (dependen de SP-09), happy path Ángel/German sin correr (falta entorno con Playwright).
+- [[2026-07-10-refactor-flujo-ejecutivo-sp06-wizard-operacion-dgo]] — Wizard Operación 4 pasos → Step 0 DGO (#21). 🚧 Bloqueado (2026-07-12): el D1 del sub-plan cita como "reusa" archivos que en realidad son código huérfano nunca montado (`PedimentoWizardContext.tsx`, `StepInventorySelection.tsx`) — el Step 0 real de `page.tsx` es un placeholder sin implementar, y no existe un "cálculo de impuestos comentado" que reactivar (el TaxEngine real solo vive en `components/operations/**`, fuera de alcance). Requiere una ronda corta de `/plan` para redefinir el D1 antes de implementar — ver manifiesto para el detalle y las preguntas abiertas. Pendiente además cablear el bloqueo "no iniciar operación con factura con error de glosa" (`assertInvoicesGlossedOk` / `GET /reference-documents/reference/:id/can-start-operation`, expuesto por SP-04).
 
 ### Fase 2 — Movimientos y logística
 - [[2026-07-10-refactor-flujo-ejecutivo-sp07-tab-movimientos-por-trafico]] — Tab Movimientos rediseño por tráfico + vínculo flexible DGO (#8; reusa #14/#15/#17). 📋
@@ -245,5 +245,21 @@ cualquier agente que retome la ejecución en una sesión nueva la respete:
 
 ## Estado del paraguas
 
-📋 Redactado — pendiente de detallar los sub-planes hijos y validar en sesión
-limpia antes de `/implementa`.
+🔨 En curso — Fase 1 **NO** quedó completamente cerrada en esta ronda:
+- ✅ Cerrados: SP-00 (spike, sin código), SP-03 (shell menú lateral), SP-04
+  (Expediente + glosado), SP-05 (DGO).
+- 📋 **Siguen abiertos, no tocados en esta ronda** (contradicen la premisa de
+  cadena continua con la que arrancó esta ronda de ejecución): SP-01 (Listado de
+  Referencias — "📋 Reabierto" desde 2026-07-11, ramas descartadas) y SP-02
+  (Wizard 3 pasos crear referencia — "📋", nunca marcado ✅ pese a que SP-04/SP-05
+  asumieron su cierre para encadenar ramas). Antes de dar Fase 1 por completa hay
+  que retomar SP-01 y SP-02.
+- 🚧 SP-06 (este cierre de ronda) quedó **bloqueado**, no implementado: el D1
+  describe un wizard y un "cálculo de impuestos comentado" que no existen en el
+  código real (ver manifiesto de SP-06). Necesita una ronda de `/plan` antes de
+  reintentar `/implementa`.
+
+Pendiente transversal (todas las fases): validación Playwright end-to-end de
+principio a fin (SP-03/SP-04/SP-05 solo corrieron gates estáticos; ninguno
+levantó el entorno con Playwright por falta de `dev_url` configurado) — queda
+para una sesión humana con el entorno arriba.

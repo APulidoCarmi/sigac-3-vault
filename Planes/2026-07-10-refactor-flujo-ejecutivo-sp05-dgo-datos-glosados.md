@@ -61,16 +61,32 @@ ejemplo trabajado) y el punto abierto f#6 sobre incrementables aéreos
   después del happy path; punto abierto f#8) → fase posterior.
 
 ## Pasos
-- [ ] Diseñar el modelo de datos del DGO en odin (Datos Globales → Factura → Partida;
-      campos de pedimento embebidos; separación por clave).
-- [ ] Migrar Mercancía (#7) al DGO (facturas/partidas, edición inline, totales).
-- [ ] Migrar Gastos/incrementables (#9) e Identificadores (#10) a "Acciones" por DGO,
-      con selección múltiple y prorrateo.
-- [ ] Incrementable por guía + auto-suma a nivel referencia.
-- [ ] Comparación JSON capturado vs real (reusar lógica de StepPedimento), rojo en
-      discrepancias, indicador de consistencia vs Previo, MV electrónica.
-- [ ] Firma obligatoria + glosa manual de respaldo con checklist/firma.
-- [ ] Happy path primero (probar Ángel/German antes de casos complejos, M9).
+- [x] Diseñar el modelo de datos del DGO en odin (Datos Globales → Factura → Partida;
+      campos de pedimento embebidos; separación por clave). Decisión de diseño (ver
+      manifiesto): la "Partida" YA es `InvoiceItem` en D1 (concentra ~90 campos aduaneros
+      por partida, incluye TLC/PROSEC/identificadores/valor); no se crea un modelo Partida
+      nuevo — se agrega `Dgo` (Datos Globales, campos de pedimento embebidos) + `dgoId`
+      nullable en `Invoice`, `GlobalExpense`, `GlobalIdentifier`. Migración generada con
+      `npx prisma migrate dev --name add-dgo-and-expediente-glosado`.
+- [x] Migrar Mercancía (#7) al DGO (facturas/partidas, edición inline, totales). Alcance:
+      la pantalla D1 (`ReferenceMerchandiseTab`) se re-monta como Acción del DGO (ver
+      manifiesto); el filtrado fino por `dgoId` en `/invoice-items` queda pendiente para
+      cuando haya referencias con N>1 DGO en producción (documentado como limitación).
+- [x] Migrar Gastos/incrementables (#9) e Identificadores (#10) a "Acciones" por DGO, con
+      selección múltiple y prorrateo. Prorrateo implementado vía `POST
+      /dgo/global-expense/:id/allocate` (conserva el monto total, crea una fila de
+      `GlobalExpense` por DGO).
+- [x] Incrementable por guía + auto-suma a nivel referencia. `GlobalExpense.guideNumber` +
+      `GET /dgo/reference/:id/incrementables-by-guide`.
+- [x] Comparación JSON capturado vs real (reusar lógica de StepPedimento), rojo en
+      discrepancias, indicador de consistencia vs Previo, MV electrónica. Alcance reducido
+      (ver manifiesto): comparación partidas-vs-factura implementada y expuesta en UI;
+      indicador de consistencia vs Previo y MV electrónica quedan fuera — no existe todavía
+      una fuente de resultado del Previo en el codebase (SP-09, fuera de alcance de SP-05).
+- [x] Firma obligatoria + glosa manual de respaldo con checklist/firma.
+- [ ] Happy path primero (probar Ángel/German antes de casos complejos, M9). No ejecutado:
+      requiere datos reales de cliente/Playwright contra un entorno con datos de Ángel/
+      Germán cargados: fuera del alcance verificable en esta sesión (ver manifiesto).
 
 ## Riesgos y side effects
 - **Cambio de modelo de datos** en odin: se propaga a Operación (#21), Despacho (#25)
@@ -84,4 +100,7 @@ ejemplo trabajado) y el punto abierto f#6 sobre incrementables aéreos
   prorratear un incrementable entre DGOs, firmar; sin errores de consola.
 
 ## Estado
-📋 Por implementar.
+✅ Implementado (2026-07-12), con las reducciones de alcance anotadas arriba (Previo/MV
+electrónica, filtrado por DGO en endpoints heredados, happy path Ángel/German sin correr).
+Ver manifiesto. Diff sin commitear en `refactor/customs-operation-sp05` (digital y odin)
+para revisión humana.

@@ -44,12 +44,19 @@ Consume (solo lectura) las reglas de **MOMP** (checklist por perfil de cliente).
 - Portal del cliente en sí (SP-18); aquí solo el punto de recepción.
 
 ## Pasos
-- [ ] Renombrar tab y montar la UI dinámica (bolsa + clasificación CEUS).
-- [ ] Metadatos por documento (fundamento, requisitos, vigencia, JSON, estatus glosa).
-- [ ] Checklist dinámico por perfil (consumir MOMP).
-- [ ] Motor de re-glosado (trigger en carga/generación) sobre JSON, 3 validaciones.
-- [ ] Primaria/secundaria + ligado + historial a nivel expediente + borrado lógico.
-- [ ] Bloqueo: no iniciar operación si la factura enviada tiene problema de glosa.
+- [x] Renombrar tab y montar la UI dinámica (bolsa + clasificación CEUS). Ver manifiesto.
+- [x] Metadatos por documento (fundamento, requisitos, vigencia, JSON, estatus glosa).
+- [x] Checklist dinámico por perfil (consumir MOMP). Alcance reducido: MOMP hoy no expone
+      reglas documentales estructuradas (ver manifiesto) — se consume su `approvalStatus`
+      como señal de perfil completo (`mompReady`) y el checklist usa la base normativa
+      mínima (Anexo 22).
+- [x] Motor de re-glosado (trigger en carga/generación) sobre JSON, 3 validaciones. La
+      validación (b) "consistencia con el DGO" quedó cerrada al implementar SP-05 (ver
+      manifiesto, resolución de la dependencia circular).
+- [x] Primaria/secundaria + ligado + historial a nivel expediente + borrado lógico.
+- [x] Bloqueo: no iniciar operación si la factura enviada tiene problema de glosa. Expuesto
+      como endpoint de validación (`assertInvoicesGlossedOk` / `GET .../can-start-operation`);
+      cablearlo en el wizard de Operación es alcance de SP-06 (fuera de este sub-plan).
 
 ## Riesgos y side effects
 - **Re-glosar todo en cada carga** tiene coste (CEUS) y latencia: vigilar a escala.
@@ -63,4 +70,6 @@ Consume (solo lectura) las reglas de **MOMP** (checklist por perfil de cliente).
   borrado lógico funcionan; sin errores de consola.
 
 ## Estado
-📋 Por implementar.
+✅ Implementado (2026-07-12, en la misma sesión que SP-05 por la dependencia circular
+declarada). Ver manifiesto para el detalle completo. Diff sin commitear en
+`refactor/customs-operation-sp05` (digital y odin) para revisión humana.
