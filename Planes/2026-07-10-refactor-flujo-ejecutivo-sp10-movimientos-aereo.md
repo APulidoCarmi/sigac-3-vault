@@ -32,9 +32,9 @@ longitud 12/11/10, master/house, peso llega después de la báscula del almacén
 - El incrementable por guía + auto-suma vive en el DGO (SP-05); aquí solo el tracking.
 
 ## Pasos
-- [ ] Componente reutilizable de Asignación de Transporte (semáforo solo lectura).
-- [ ] Revalidación Aérea (documental + pago).
-- [ ] Manifiesto de Carga + Tablero de planeación diaria con las etapas.
+- [x] Componente reutilizable de Asignación de Transporte (semáforo solo lectura).
+- [x] Revalidación Aérea (documental + pago).
+- [x] Manifiesto de Carga + Tablero de planeación diaria con las etapas.
 
 ## Riesgos y side effects
 - Depende de SP-07 (el tab Movimientos debe enrutar a estos según tráfico aéreo).
@@ -46,4 +46,13 @@ longitud 12/11/10, master/house, peso llega después de la báscula del almacén
   asignar transporte (semáforo solo lectura); sin errores de consola.
 
 ## Estado
-📋 Por implementar.
+✅ Cerrado (2026-07-12). Ver manifiesto:
+[[.manifiestos/2026-07-10-refactor-flujo-ejecutivo-sp10-movimientos-aereo]].
+Ambos repos, rama `refactor/customs-operation-sp10` (encadenada desde
+`refactor/customs-operation-sp09`), diff sin commitear. Gate estático verde
+en ambos repos (odin: 30/30 tests nuevos, lint 0 errores; digital: `tsc
+--noEmit` 0 errores, eslint 0 errores en archivos nuevos/tocados). Playwright
+pendiente de sesión humana (sin `dev_url` configurado). Desviación documentada:
+el selector de `shipmentId` en el tab AEREO es manual (input de texto) porque
+todavía no existe una lista de shipments aéreos cableada — los paneles de
+Transporte/Revalidación están totalmente desacoplados de esa limitación.
