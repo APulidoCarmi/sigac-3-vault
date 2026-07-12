@@ -183,7 +183,7 @@ sub-plan propio: viven dentro de SP-05 (DGO).
 - [[2026-07-10-refactor-flujo-ejecutivo-sp16-despacho-stepper]] — Stepper de despacho: 7 pasos, retirar GLOSA (queda como gate interno), Shipper condicional (#25). 🟡 Parcialmente completado (2026-07-12, segundo intento sobre D1 rediseñado) — SHIPPER condicional implementado end-to-end (Prisma + workflow + front), GLOSA retirada de tabs con panel inline, MODULACION con contenido real de solo lectura, archivos muertos limpiados; la purga del sistema legacy de despacho (JSON blob) quedó diferida a un sub-plan propio por entrelazamiento con rutas hoy vivas (`regenerate-pedimento`, `completeModulacion`, posible webhook externo de Bifrost). Puertas estáticas verdes en ambos repos; verificación Playwright pendiente (sin `dev_url`). Ver manifiesto.
 
 ### Fase 4 — Entrada y cliente
-- [[2026-07-10-refactor-flujo-ejecutivo-sp17-bandeja-entrada]] — Bandeja de Entrada / Inbox (#1). 🚧 Bloqueado (2026-07-12): D1 desactualizado/inválido en 3 de 4 piezas (tabs automático/temporal/avanzado, cartas sin firmar, guías sin identificar — ninguna existe como dato en ningún repo, requieren decisión de producto). Sin código. Ver manifiesto.
+- [[2026-07-10-refactor-flujo-ejecutivo-sp17-bandeja-entrada]] — Bandeja de Entrada / Inbox (#1). ✅ Cerrado (2026-07-12, segundo intento sobre el D1 rediseñado): piezas 2 (cartas sin firmar, modelo nuevo `ReferenceLetter` + bloqueo `assertSignedLettersOk` en glosa y creación de operación), 3 (guías sin identificar, modelo nuevo `UnidentifiedWaybill` + reconocimiento AWB + generalización de `BolReconciliationService` por `trackingType`) y 4 (panel de pendientes agregado, `GET .../pending-panel`) implementadas completas en ambos repos; pieza 1 (tabs automático/temporal/avanzado) sigue diferida sin implementar, tal como pedía el D1. Front: pantalla nueva `/inbox` con 3 secciones + entrada en el menú lateral. Rama `refactor/customs-operation-sp17-v2` en ambos repos, gate estático verde (odin 528/528 test suites; digital tsc/next build 0 errores, 88/88 tests propios). Playwright pendiente de sesión humana. Ver manifiesto para desviación documentada (agregación cross-referencia de Previo/clasificación no construida, fuera de los Pasos declarados del D1).
 - [[2026-07-10-refactor-flujo-ejecutivo-sp18-portal-documentos-cliente]] — Portal de Documentos del Cliente (#26). ✅ Cerrado (2026-07-12): módulo nuevo `carmi-odin-api-v2/src/reference-portal/**` — token público (`ReferencePublicToken`) atado a `clientCompanyId` (no a una sola Reference, a diferencia del precedente 1:1 de OSD) para soportar la búsqueda por OC entre varios expedientes del mismo cliente; cada acción sobre una Reference puntual valida `clientCompanyId` y responde 404 si no coincide (mitigación IDOR). Documentos del cliente entran por `ReferenceDocumentsService.create` (SP-04) con el nuevo flag `uploadedByClient`, y disparan `reglosaExpediente` al subir. Preview/descarga individual usa signed URLs de GCP de ~10 min generados al vuelo (no el `publicUrl` de la carga); el ZIP del expediente completo se arma en streaming con `archiver` (dependencia nueva, fijada a v7 por incompatibilidad ESM de v8 con este proyecto CommonJS). Front: página nueva `app/(public)/document-portal/[token]/page.tsx` + proxies `app/api/public/document-portal/**` (mismo patrón que OSD), sin tocar `components/operations`/`customerPortal/operations` (fuera de alcance). Ambos repos, gate estático verde (odin: 527 test suites/3472 tests OK, tsc/eslint sin errores nuevos; digital: tsc 0 errores en todo el repo, eslint 0 errores en archivos nuevos, `next build` exitoso). Playwright pendiente de sesión humana con datos sembrados (compañía + referencia + OC de prueba). Ver manifiesto para detalle de diseño.
 
 ## Riesgos y side effects transversales
@@ -283,9 +283,10 @@ la sesión de Playwright).
 
 ## Cierre del paraguas (2026-07-12)
 
-**SP-18 fue el último sub-plan del paraguas.** Con su cierre, la Fase 4 y la
-lista completa de sub-planes quedan resueltos, con dos excepciones explícitas
-que requieren decisión humana antes de poder retomarse:
+**SP-17 fue el ÚLTIMO sub-plan pendiente del paraguas completo.** Con su
+cierre (2026-07-12, segundo intento sobre el D1 rediseñado de SP-17), la
+lista completa de sub-planes de las 4 fases queda resuelta, con una única
+excepción explícita que requiere decisión humana antes de poder retomarse:
 
 - **SP-16 (Stepper de despacho)**: 🟡 Parcialmente completado (2026-07-12,
   segundo intento sobre el D1 rediseñado) — implementado SHIPPER condicional
@@ -295,14 +296,27 @@ que requieren decisión humana antes de poder retomarse:
   por depender de rutas hoy en vivo no cubiertas por el D1 (`regenerate-pedimento`,
   `completeModulacion`/`executeStepPublic`, posible webhook externo de
   Bifrost) — ver su manifiesto.
-- **SP-17 (Bandeja de Entrada / Inbox)**: 🚧 Bloqueado — D1 desactualizado/
-  inválido en 3 de 4 piezas (tabs automático/temporal/avanzado, cartas sin
-  firmar, guías sin identificar), sin dato real en ningún repo; requiere
-  decisión de producto antes de poder diseñarse. Sin código.
 
-Todo lo demás (Fases 1-2 completas, SP-12/13/14/15 de Fase 3, y SP-18 de Fase
-4) está ✅ cerrado, con la validación Playwright end-to-end pendiente de
-sesión humana en todos los casos (transversal, no es un bloqueo de ningún
-sub-plan en particular — falta `dev_url`/entorno levantado + datos de prueba
-sembrados). El diff acumulado de toda la ejecución sigue sin commitear en
-ambos repos, en la rama compartida `refactor/customs-operation-sp18`.
+**SP-17 (Bandeja de Entrada / Inbox)**: ✅ Cerrado (2026-07-12) — piezas 2, 3 y
+4 implementadas completas en ambos repos (rama `refactor/customs-operation-sp17-v2`,
+encadenada desde `refactor/customs-operation-sp16`); pieza 1 (tabs
+automático/temporal/avanzado) sigue diferida sin implementar, tal como pedía
+el D1 rediseñado. Ver su manifiesto para el detalle de diseño y desviaciones.
+
+Todo lo demás (Fases 1-2 completas, SP-12/13/14/15 de Fase 3, SP-18 de Fase 4,
+y ahora SP-17) está ✅ cerrado (o 🟡 parcial en el caso documentado de SP-16),
+con la validación Playwright end-to-end pendiente de sesión humana en todos
+los casos (transversal, no es un bloqueo de ningún sub-plan en particular —
+falta `dev_url`/entorno levantado + datos de prueba sembrados). El diff
+acumulado de toda la ejecución sigue sin commitear en ambos repos, en la rama
+compartida `refactor/customs-operation-sp17-v2`.
+
+**Pendientes transversales para retomar el paraguas** (los únicos que quedan
+tras el cierre de SP-17):
+1. Sub-plan de seguimiento para la purga del sistema legacy de despacho
+   (diferido por SP-16).
+2. Sesión de validación Playwright end-to-end completa (transversal a todas
+   las fases, nunca ejecutada por falta de entorno).
+3. (Opcional, sin bloquear nada) Sub-plan nuevo para la agregación
+   cross-referencia de Previo/clasificación en el Inbox, si el usuario lo
+   prioriza — ver manifiesto de SP-17.

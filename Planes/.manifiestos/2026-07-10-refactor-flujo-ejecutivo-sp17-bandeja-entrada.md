@@ -130,3 +130,215 @@ Ninguno (código). Solo este manifiesto y las ramas creadas por convención
 
 ## Gates
 No aplica — no se escribió código.
+
+---
+
+## Intento 2026-07-12 — implementación completa (piezas 2, 3, 4)
+
+El D1 fue rediseñado por el usuario (ver `2026-07-10-refactor-flujo-ejecutivo-sp17-bandeja-entrada.md`
+actual, fechado 2026-07-12) resolviendo las 4 preguntas abiertas de este manifiesto. Este
+intento implementa el D1 rediseñado completo, sobre rama nueva
+`refactor/customs-operation-sp17-v2` en ambos repos (encadenada desde
+`refactor/customs-operation-sp16`, que ya traía el diff acumulado de todo el
+paraguas hasta Fase 3). Pieza 1 (tabs automático/temporal/avanzado) sigue
+**diferida, no implementada**, tal como pide el D1.
+
+### `carmi-odin-api-v2`
+
+**Migración Prisma** (vía CLI, `npx prisma migrate dev --name
+add-inbox-signed-letters-and-unidentified-waybills`, una sola migración para
+las 4 piezas de schema):
+- `MompConfiguration`: 2 columnas nuevas, `requiresSignedLetters` (default
+  `false`, comportamiento seguro por defecto) y `signedLettersDeadlineDays`.
+- Modelo nuevo `ReferenceLetter` + enum `ReferenceLetterStatus`
+  (PENDING/SENT/SIGNED), con relación a `Reference` (cascade) y FK opcional
+  única a `ReferenceDocument` (el PDF digitalizado una vez firmada).
+- `Referencedocumenttype` (schema) y su espejo TS `ReferenceDocumentType`
+  (`src/reference-documents/dtos/create-reference-document.dto.ts`): valor
+  nuevo `CARTA_FIRMA`.
+- Modelo nuevo `UnidentifiedWaybill` + enum `UnidentifiedWaybillStatus`
+  (PENDING/LINKED_EXISTING/REFERENCE_CREATED/DISMISSED), con FKs opcionales a
+  `Shipment` y `Reference` (caminos "ligar existente"/"crear referencia").
+- `prisma migrate status` confirmó estado limpio antes de migrar (última
+  migración previa: `add_shipper_step_name` de SP-16).
+
+**Pieza 2 — cartas sin firmar** (`src/reference-documents/services/reference-documents.service.ts`,
+`.../controllers/reference-documents.controller.ts`, DTO nuevo
+`dtos/reference-letter.dto.ts`):
+- `createLetter`, `markLetterSent`, `markLetterSigned` (linkea opcionalmente
+  el `ReferenceDocument` digitalizado), `getPendingLetters(daysThreshold?)`
+  (cruza `MompConfiguration.signedLettersDeadlineDays` por cliente vs. el
+  query param explícito; sin plazo configurado en ningún lado, la carta se
+  lista igual como informativa sin marcarse vencida).
+- `assertSignedLettersOk(referenceId)`: no bloquea si el MOMP del cliente no
+  requiere cartas (`requiresSignedLetters=false`, default); si las requiere,
+  exige que TODAS las `ReferenceLetter` no borradas de la referencia estén
+  `SIGNED`.
+- Wiring en los 3 puntos exactos que pedía el D1: `reglosaExpediente` (al
+  inicio, antes del motor de glosa), `ReferenceDocumentsController.canStartOperation`
+  (línea ~83, junto a la llamada ya existente a `assertInvoicesGlossedOk`), y
+  `OperationsService.create` (`src/operations/services/operations.service.ts:917-922`,
+  junto a la llamada existente a `assertInvoicesGlossedOk`, dentro del mismo
+  bucle sobre `involvedReferenceIds`). Confirmado con `git diff`/lectura de
+  código que no pisa nada de `startDispatchWorkflow` (SP-16, método distinto,
+  línea 3578+).
+- Endpoints nuevos: `POST /reference-documents/reference/:referenceId/letters`,
+  `GET /reference-documents/letters/pending`, `PATCH
+  /reference-documents/letters/:id/mark-sent`, `PATCH
+  /reference-documents/letters/:id/mark-signed`.
+
+**Pieza 3 — guías sin identificar** (`src/email-documents/**`):
+- `DocumentProcessorService.processDocument`: case nuevo para
+  `airwaybill`/`air_waybill`/`awb` → `action: 'match_shipment'` +
+  `extractAwbFields` (nuevo, análogo a `extractBolFields`).
+- `BolReconciliationService` generalizado por `trackingType: 'BOL' | 'AWB'`
+  (`WaybillReconciliationInput.trackingType`, default `'BOL'` por
+  compatibilidad): el match contra `ShipmentTrackingNumber` usa el
+  `trackingType` recibido; el lado `AppointmentBol`/`Appointment` (terrestre)
+  se gatea explícitamente a `trackingType === 'BOL'` en los 4 puntos donde
+  aplicaba (query inicial, replicación BOL→cita, adjuntar documento a cita,
+  timeline de cita) — para AWB nunca se toca el lado de citas, tal como pedía
+  el D1.
+- Persistencia de `UnidentifiedWaybill` (antes solo `logger.warn`) en 4 ramas:
+  BOL/AWB vacío, `no_match` (sin cita ni shipment), cita con BOL pero sin
+  shipment linkeado, y el `catch` general de la transacción — vía método
+  privado `persistUnidentifiedWaybill` (acepta `tx` opcional para participar
+  de la transacción cuando aplica, o `this.prisma` cuando la tx ya falló).
+- Nuevo método público `ensureTrackingNumberForShipment` en
+  `BolReconciliationService` (envuelve el `ensureShipmentTrackingNumber`
+  privado ya existente) para que el flujo "ligar a existente" de
+  `UnidentifiedWaybill` lo reuse sin duplicar lógica.
+- Módulo nuevo `unidentified-waybills` dentro de `email-documents`
+  (`services/unidentified-waybills.service.ts`,
+  `controllers/unidentified-waybills.controller.ts`,
+  `dto/unidentified-waybill.dto.ts`), wireado en `email-documents.module.ts`
+  (que ahora también exporta `BolReconciliationService`). Endpoints: `GET
+  /email-documents/unidentified-waybills?status=PENDING`, `POST
+  .../:id/link-existing` (resuelve el shipment INBOUND de la referencia
+  destino, o el primero disponible; 400 si no hay ninguno), `POST
+  .../:id/create-reference` (marca `REFERENCE_CREATED`).
+- `EmailDocumentsService.processIncoming`: nuevo helper privado
+  `resolveTrackingType(documentType)` que decide `'AWB'` vs `'BOL'` según el
+  `documentType` que decidió el processor, pasado a `reconcileBol`.
+
+**Pieza 4 — panel de pendientes** (`ReferenceDocumentsService.getPendingPanel`
++ `GET /reference-documents/reference/:referenceId/pending-panel`): agrega,
+sin tablas nuevas, `getChecklist` (documentos base), `ReferenceDocument` con
+`glosaStatus != GLOSSED_OK` (categoría "glosa"), `ReferenceLetter` no
+`SIGNED` (categoría "letters", con `daysSinceSent`), `Previo` en
+`REQUESTED`/`IN_TABLE`, y folios `Cove`/`EDocument`/`ValueManifestation` sin
+folio o sin `status=COMPLETED` (vía `pediment: { referenceId }` para
+`ValueManifestation`, confirmando la relación `ValueManifestation.pedimentId
+→ Pedimento.referenceId`). Diseñado para cargarse bajo demanda por
+referencia (sin precálculo masivo), tal como pedía el D1.
+
+**Tests nuevos**: `reference-documents.service.spec.ts` (assertSignedLettersOk
+— incluye la "prueba de bloqueo" de los Criterios de verificación del D1,
+letters CRUD, getPendingPanel), `document-processor.service.spec.ts` (AWB
+recognition), `unidentified-waybills.service.spec.ts` (nuevo, linkExisting/
+markReferenceCreated), `bol-reconciliation.service.spec.ts` (sin cambios de
+código, verificado que sigue verde con el nuevo flujo de persistencia
+degradando con gracia si el mock no cubre `unidentifiedWaybill.create`).
+**Desviación documentada**: no se agregó un test end-to-end de
+`OperationsService.create()` ejerciendo la rama DGO con `assertSignedLettersOk`
+real — ese método no tenía NINGÚN test de `create()` antes de este sub-plan
+(no existe `describe('create'...)` en `operations.service.spec.ts`), habría
+requerido construir desde cero un mock scaffolding grande fuera del alcance
+declarado de este sub-plan; sí se corrigió el mock de
+`ReferenceDocumentsService` en ese spec para incluir `assertSignedLettersOk`
+(evita que cualquier test futuro que ejercite la rama DGO rompa por función
+`undefined`), y la lógica de `assertSignedLettersOk` en sí está cubierta
+exhaustivamente en `reference-documents.service.spec.ts`.
+
+**Gate**: `npx tsc --noEmit` sin errores nuevos (errores preexistentes solo en
+specs no tocados: `twilio.service.spec.ts`, `seal-resolver.service.spec.ts`,
+`company-patent-signature-config.service.spec.ts`, `audited.spec.ts`, 3
+e2e-spec — todos con problemas de tipado de Jest ajenos a este sub-plan).
+`npx eslint` sin errores nuevos (solo warnings/errores preexistentes en
+archivos con import/order y una aserción innecesaria, confirmados
+comparando contra el estado pre-cambio con `git stash`). `npx jest` completo:
+**528/528 test suites, 3488/3494 tests (6 todo preexistentes)**.
+
+### `carmi-digital`
+
+**Pantalla nueva** `app/(customerPortal)/inbox/page.tsx` (ruta `/inbox`), con
+3 componentes en `app/(customerPortal)/inbox/components/`:
+- `WaitingOnOthersSection.tsx` — 3 columnas: "Por identificar" (`DRAFT`,
+  reusa el mismo fetch pattern que `ReferenceBoard.tsx`), "Cartas sin firmar"
+  (`GET /reference-documents/letters/pending`, nuevo), "Arribo" (reusa
+  `preArrivalService.getAll()` de `lib/api/modules/shipment-pre-arrival.ts`
+  tal cual, sin cambios). **Desviación documentada**: "Previo" y
+  "clasificación" (mencionados en el D1 como parte de esta sección) NO se
+  implementaron como columnas de datos reales — `PrevioController` solo
+  expone `GET /previo/reference/:referenceId` (1 por referencia, no hay
+  endpoint de listado cross-referencia por status), y construir ese agregado
+  nuevo no está en la sección "## Pasos" del D1 (que sólo lista los 3 pasos
+  de backend de piezas 2/3/4, ninguno de agregación de Previo/clasificación).
+  Se documenta la nota de alcance visible en la propia UI (pie de sección) en
+  vez de improvisar un endpoint nuevo fuera de lo declarado — a diseñar en un
+  sub-plan de seguimiento si el usuario lo prioriza.
+- `PendingPanelSection.tsx` — búsqueda por Reference ID +
+  `GET /reference-documents/reference/:id/pending-panel` (carga bajo demanda,
+  sin precálculo para todo el tablero, tal como pedía el D1).
+- `UnidentifiedWaybillsSection.tsx` + `RecognizeWaybillModal.tsx` — lista de
+  `GET /email-documents/unidentified-waybills?status=PENDING`, botón
+  "Reconocer" abre modal con 2 tabs: "Ligar a existente" (`SearchableSelect`
+  buscando por `GET /references?search=...`, reusa el componente ya existente
+  en `@/components/ui/searchable-select`) y "Crear referencia nueva" (navega
+  al wizard SP-02 con `clientId` prellenado si `extractedJson.clientId`
+  existe, más un `waybillId` nuevo en el querystring).
+- **Wizard SP-02** (`app/(customerPortal)/references/createReference/page.tsx`):
+  se agregó lectura de `waybillId` desde `useSearchParams()` y, al crear la
+  referencia exitosamente, una llamada no bloqueante a `POST
+  /email-documents/unidentified-waybills/:id/create-reference` con el
+  `referenceId` resultante — cierra el ciclo "crear referencia nueva" del D1
+  sin que el ejecutivo tenga que volver manualmente al Inbox a confirmar.
+- **Sidebar** (`components/ui/sidebar/Sidebar.tsx`): entrada nueva "Bandeja de
+  Entrada" (`/inbox`, ícono `Inbox` de lucide-react) como primer ítem del
+  menú, antes de "Dashboard" — es el punto de arranque del día
+  (Inventario_Pantallas_v3 #1).
+- No se tocó `components/operations`, `customerPortal/operations` ni
+  `actions/operations` (fuera de alcance del paraguas, confirmado).
+
+**Gate**: `npx tsc --noEmit -p tsconfig.json` — 0 errores (repo completo).
+`npx eslint` sobre los archivos tocados — 0 errores, solo warnings
+preexistentes (unused vars/`any` ya presentes antes de este sub-plan en
+`createReference/page.tsx` y `Sidebar.tsx`, confirmados por patrón repetido).
+`npx next build` — **build exitoso, sin errores**, ruta `/inbox` registrada
+(el bloqueo preexistente de Turbopack/`three`/`mammoth` que documentaba el
+manifiesto de SP-06 ya no reprodujo en este intento — posible resolución
+externa por `pnpm install` de un sub-plan anterior). `npx jest` — 88/88 tests
+propios pasan (2 suites ajenas fallan por dependencia faltante
+`react-i18next`, preexistente, no relacionado).
+
+### Bloqueos / pendientes
+- Playwright end-to-end sigue pendiente de sesión humana (transversal a todo
+  el paraguas, sin `dev_url` configurado para este cliente).
+- Agregación cross-referencia de Previo/clasificación para el Inbox: gap
+  documentado arriba, requiere decisión de si vale la pena un endpoint nuevo
+  (fuera de alcance de este sub-plan).
+
+### Archivos tocados (código)
+**`carmi-odin-api-v2`**:
+- `prisma/schema.prisma`, `prisma/migrations/20260712095908_add_inbox_signed_letters_and_unidentified_waybills/`
+- `src/reference-documents/services/reference-documents.service.ts` (+ `.spec.ts`)
+- `src/reference-documents/controllers/reference-documents.controller.ts`
+- `src/reference-documents/dtos/reference-letter.dto.ts` (nuevo)
+- `src/reference-documents/dtos/create-reference-document.dto.ts`
+- `src/operations/services/operations.service.ts` (+ `.spec.ts`)
+- `src/email-documents/document-processor.service.ts` (+ `.spec.ts`)
+- `src/email-documents/bol-reconciliation.service.ts`
+- `src/email-documents/email-documents.service.ts`
+- `src/email-documents/email-documents.module.ts`
+- `src/email-documents/dto/unidentified-waybill.dto.ts` (nuevo)
+- `src/email-documents/services/unidentified-waybills.service.ts` (nuevo, + `.spec.ts`)
+- `src/email-documents/controllers/unidentified-waybills.controller.ts` (nuevo)
+
+**`carmi-digital`**:
+- `app/(customerPortal)/inbox/page.tsx` (nuevo)
+- `app/(customerPortal)/inbox/components/WaitingOnOthersSection.tsx` (nuevo)
+- `app/(customerPortal)/inbox/components/PendingPanelSection.tsx` (nuevo)
+- `app/(customerPortal)/inbox/components/UnidentifiedWaybillsSection.tsx` (nuevo)
+- `app/(customerPortal)/inbox/components/RecognizeWaybillModal.tsx` (nuevo)
+- `app/(customerPortal)/references/createReference/page.tsx`
+- `components/ui/sidebar/Sidebar.tsx`
