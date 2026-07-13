@@ -323,3 +323,43 @@ tras el cierre de SP-17):
 3. (Opcional, sin bloquear nada) Sub-plan nuevo para la agregación
    cross-referencia de Previo/clasificación en el Inbox, si el usuario lo
    prioriza — ver manifiesto de SP-17.
+
+## SP-19 (post-cierre, 2026-07-12) — Configuración de datos de pedimento en el DGO
+
+**SP-19: ✅ Cerrado (2026-07-13)** — sub-plan agregado post-cierre del paraguas a partir
+de una revisión dirigida del dueño de producto contra el meet
+[[2026-07-07 - Revision de pantallas flujo operación]]. Rama `refactor/customs-operation-sp19`,
+encadenada desde `refactor/customs-operation-sp16b-legacy-purge`, en ambos repos. Ver su
+manifiesto (`Planes/.manifiestos/2026-07-10-refactor-flujo-ejecutivo-sp19-configuracion-pedimento-en-dgo.md`)
+para el detalle completo.
+
+Tres piezas, las tres implementadas:
+1. Formulario de edición de aduana/clavePedimento/patente/regimen/destino en
+   `ReferenceDGOTab.tsx` (tab "Pedimento" del drawer de Acciones del DGO), con bloqueo de
+   solo lectura cuando el DGO ya originó un pedimento (`dgo.locked`, campo nuevo expuesto
+   por el backend).
+2. Fix del bug de "grupos congelados" en el wizard de Operación: selector de grupo de
+   pedimento activo en `stepCustomsInfo.tsx` (antes inexistente en la UI pese a que el
+   store ya tenía las funciones), fix del `useEffect` de seed del formulario, y flush de
+   los datos del grupo activo antes de construir el payload de submit en `page.tsx`.
+   Auditoría de "Aduanas" del wizard: `customsOfficeId` pasa a solo lectura por grupo
+   (derivado del DGO), `customsPatentId` se queda editable (dato legítimo de Operación
+   completa, confirmado contra el DTO backend).
+3. Backend: `operations.service.ts::validarValorAgregadoPorClave` resuelve la clave de
+   pedimento desde `dgo.clavePedimento` (server-side, vía `group.dgoId`) en vez de confiar
+   en `dto.pedimentos[].pedimentoCode` del payload del cliente.
+
+**Desviación no prevista, corregida por bloquear la verificación**: se encontraron y
+corrigieron 2 bugs preexistentes de doble-envoltura de respuesta en `dgo.controller.ts`
+(`POST /dgo/validate-selection`, `GET /dgo/:id`) — bloqueaban por completo el Step 0 del
+wizard de creación de Operación para cualquier selección de DGO(s), no solo 2+. Mismo
+patrón de fix ya usado en 3 endpoints hermanos del mismo archivo.
+
+**Verificación parcial** (ver manifiesto para detalle): pieza 1 verificada end-to-end en
+Playwright (editar + persistir + recargar). Pieza 2 verificada por code review/tests
+unitarios/gates estáticos, pero NO con recorrido visual completo del wizard hasta el step
+"Despacho" — bloqueado por (a) un bug de layout preexistente y no relacionado en los
+steps "Datos Básicos"/"Transporte" (colapso de tamaño 0×0, ajeno a los archivos de este
+sub-plan) y (b) datos de prueba insuficientes en este ambiente para un escenario real de
+2+ DGOs firmados sin discrepancias. Pieza 3 (backend) verificada con tests unitarios y
+gates estáticos. Gates estáticos (typecheck/lint/tests) verdes en ambos repos.
