@@ -363,3 +363,19 @@ steps "Datos Básicos"/"Transporte" (colapso de tamaño 0×0, ajeno a los archiv
 sub-plan) y (b) datos de prueba insuficientes en este ambiente para un escenario real de
 2+ DGOs firmados sin discrepancias. Pieza 3 (backend) verificada con tests unitarios y
 gates estáticos. Gates estáticos (typecheck/lint/tests) verdes en ambos repos.
+
+## SP-20 (post-cierre, 2026-07-13) — Ajustes de bandeja, expediente, DGO, movimientos y tickets
+
+[[2026-07-10-refactor-flujo-ejecutivo-sp20-ajustes-revision-0713]] — 📋 Redactado, listo
+para `/implementa`. Originado por revisión dirigida contra
+[[2026-07-13 - Revisión de pantallas]] (continuación de M9/SP-19). Cubre: fusión de
+bandeja de entrada + listado de referencias en tabs (elimina la ruta `/inbox` standalone),
+reordenamiento del shell del detalle (Expediente Aduanero antes de DGO), mover "crear
+factura manual" del DGO al Expediente Aduanero, completar el Expediente Aduanero a 3
+partes por documento + checklist de faltantes, corregir bug de selector de tipo de
+movimiento por tráfico, y restricción 1 referencia : 1 ticket. Incluye como primer paso
+revertir un intento de implementación parcial y mal hecho que ya existía sin commitear en
+la rama compartida `feat/2026-07-13-rediseno-interfaz` (ambos repos) al momento de
+redactar este plan. Riesgo abierto documentado en el propio sub-plan: los tabs
+"Instrucciones" y "Citas" del detalle quedan sin resolver, pendientes de confirmación
+explícita de German.
