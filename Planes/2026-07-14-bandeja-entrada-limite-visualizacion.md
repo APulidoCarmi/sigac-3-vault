@@ -51,16 +51,16 @@ El Inbox (SP-17) propone 7 secciones (Alertas, Accionables, Curso automático, E
   - [x] Por identificar (movimientos): orden por fecha de llegada desc (más recientes) — ya implementado en `getUnidentified`, solo ajustar límite/orden si hace falta.
 
 - [ ] **Frontend (carmi-digital):**
-  - [ ] Renderizar el contador "5 de 20" debajo de cada título de sección (si `total > 5`) en `InboxDashboard.tsx`.
-  - [ ] Eliminar el botón "Cargar más" existente por sección.
-  - [ ] Asegurar que la UI no se corta ni cambia layout si hay 3 items vs 20.
+  - [x] Renderizar el contador "5 de 20" debajo de cada título de sección (si `total > 5`) en `InboxDashboard.tsx`.
+  - [x] Eliminar el botón "Cargar más" existente por sección.
+  - [x] Asegurar que la UI no se corta ni cambia layout si hay 3 items vs 20.
 
 - [ ] **Test:**
-  - [ ] Backend: endpoint devuelve máx 5 items en cada sección (de las 5 en alcance), `total` es cantidad real.
-  - [ ] Backend: orden por severidad en Alertas con umbrales 5/10 (rojo antes que amarillo).
-  - [ ] Backend: orden por fecha en Accionables/Esperando terceros/Por identificar.
-  - [ ] Backend: orden por progreso asc en Curso automático.
-  - [ ] Frontend: contador visible cuando `total > 5`, invisible cuando `total ≤ 5`; botón "Cargar más" ya no existe.
+  - [x] Backend: endpoint devuelve máx 5 items en cada sección (de las 5 en alcance), `total` es cantidad real.
+  - [x] Backend: orden por severidad en Alertas con umbrales 5/10 (rojo antes que amarillo).
+  - [x] Backend: orden por fecha en Accionables/Esperando terceros/Por identificar.
+  - [x] Backend: orden por progreso asc en Curso automático.
+  - [x] Frontend: contador visible cuando `total > 5`, invisible cuando `total ≤ 5`; botón "Cargar más" ya no existe.
   - [ ] Playwright: navegar a Inbox, verificar máx 5 refs por sección, contador visible, sin errores de consola.
 
 ## Riesgos y side effects a vigilar
