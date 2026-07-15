@@ -43,30 +43,31 @@ El Inbox (SP-17) propone 7 secciones (Alertas, Accionables, Curso automático, E
 
 ## Pasos
 
-- [ ] **Backend (carmi-odin-api-v2):** 
-  - [ ] Modificar endpoints de las 7 secciones del Inbox para devolver max 5 items + contador total (`{ items: [...5], total: 20 }`).
-  - [ ] Alertas: orden por severidad (rojo → amarillo → verde).
-  - [ ] Accionables, Esperando terceros, Consolidados, Pedimentos pagados: orden por fecha desc (más recientes).
-  - [ ] Curso automático: orden por progreso asc (más atrasadas).
-  - [ ] Por identificar (movimientos): orden por fecha desc (más recientes).
+- [ ] **Backend (carmi-odin-api-v2)** — el shape `{ items, total, page, limit, totalPages }` ya existe en `inbox.service.ts`; el cambio es de `limit` default + orden, no de contrato:
+  - [x] Fijar `limit` default = 5 (hard-coded, no configurable) en las 5 secciones existentes: Alertas, Accionables, Curso automático, Esperando terceros, Por identificar.
+  - [ ] Alertas: actualizar `ALERT_MAX_DAYS_AHEAD` y `severityFor()` a los umbrales del plan (rojo ≤5 días vencido, amarillo 5-10, verde >10) y ordenar por severidad (rojo → amarillo → verde).
+  - [ ] Accionables, Esperando terceros: orden por fecha de creación desc (más recientes).
+  - [ ] Curso automático: orden por progreso calculado asc (reutilizar cálculo `completedCount/totalSteps` de `inbox.service.ts:263`, más atrasadas primero).
+  - [ ] Por identificar (movimientos): orden por fecha de llegada desc (más recientes) — ya implementado en `getUnidentified`, solo ajustar límite/orden si hace falta.
 
 - [ ] **Frontend (carmi-digital):**
-  - [ ] Renderizar el contador "5 de 20" debajo de cada título de sección (si `total > 5`).
-  - [ ] Iterar sobre `items` (máx 5) en lugar de listar todo.
+  - [ ] Renderizar el contador "5 de 20" debajo de cada título de sección (si `total > 5`) en `InboxDashboard.tsx`.
+  - [ ] Eliminar el botón "Cargar más" existente por sección.
   - [ ] Asegurar que la UI no se corta ni cambia layout si hay 3 items vs 20.
 
 - [ ] **Test:**
-  - [ ] Backend: endpoint devuelve máx 5 items en cada sección, `total` es cantidad real.
-  - [ ] Backend: orden por severidad en Alertas (rojo antes que amarillo).
-  - [ ] Backend: orden por fecha en otras secciones.
-  - [ ] Frontend: contador visible cuando `total > 5`, invisible cuando `total ≤ 5`.
+  - [ ] Backend: endpoint devuelve máx 5 items en cada sección (de las 5 en alcance), `total` es cantidad real.
+  - [ ] Backend: orden por severidad en Alertas con umbrales 5/10 (rojo antes que amarillo).
+  - [ ] Backend: orden por fecha en Accionables/Esperando terceros/Por identificar.
+  - [ ] Backend: orden por progreso asc en Curso automático.
+  - [ ] Frontend: contador visible cuando `total > 5`, invisible cuando `total ≤ 5`; botón "Cargar más" ya no existe.
   - [ ] Playwright: navegar a Inbox, verificar máx 5 refs por sección, contador visible, sin errores de consola.
 
 ## Riesgos y side effects a vigilar
 
-- **Escala:** Si hay muchas referencias en la DB, el endpoint de cada sección puede ser lento al calcular `total`. Solución: usar `COUNT(*)` en query separada sin paginación heavy, o caché eventual (fuera de alcance, evaluar en implementación si es lento).
+- **Escala:** El `total` ya se calcula hoy (Prisma `$transaction([findMany, count])` en Alertas/Accionables/Curso automático; en memoria en Esperando terceros/Por identificar). No es un cálculo nuevo, así que no hay riesgo de performance adicional por este cambio — el riesgo preexistente en la paginación en memoria queda igual.
 
-- **Side effects en SP-17:** Los endpoints del Inbox ya retornan datos; este plan modifica su forma (agregar `{ items, total }` en lugar de solo lista). Revisar si hay otros consumidores de esos endpoints que rompan por el cambio de contrato.
+- **Contrato de la API:** El shape `{ items, total, page, limit, totalPages }` ya existe; este plan solo cambia el `limit` default a 5 (hard-coded) y el orden de cada sección. Único consumidor confirmado: `InboxDashboard.tsx` — se actualiza en el mismo plan (elimina "Cargar más"), no hay otros consumidores en el monorepo.
 
 - **Orden en Accionables:** Se usa fecha de creación, pero Enrique en la reunión mencionó "criterios pendientes de definir formalmente". Si durante implementación se requiere un orden diferente (ej. por prioridad MOMP), reparametrizar sin reabrir el plan.
 
