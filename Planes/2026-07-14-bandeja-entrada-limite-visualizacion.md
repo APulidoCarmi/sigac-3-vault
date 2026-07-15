@@ -45,10 +45,10 @@ El Inbox (SP-17) propone 7 secciones (Alertas, Accionables, Curso automático, E
 
 - [ ] **Backend (carmi-odin-api-v2)** — el shape `{ items, total, page, limit, totalPages }` ya existe en `inbox.service.ts`; el cambio es de `limit` default + orden, no de contrato:
   - [x] Fijar `limit` default = 5 (hard-coded, no configurable) en las 5 secciones existentes: Alertas, Accionables, Curso automático, Esperando terceros, Por identificar.
-  - [ ] Alertas: actualizar `ALERT_MAX_DAYS_AHEAD` y `severityFor()` a los umbrales del plan (rojo ≤5 días vencido, amarillo 5-10, verde >10) y ordenar por severidad (rojo → amarillo → verde).
-  - [ ] Accionables, Esperando terceros: orden por fecha de creación desc (más recientes).
-  - [ ] Curso automático: orden por progreso calculado asc (reutilizar cálculo `completedCount/totalSteps` de `inbox.service.ts:263`, más atrasadas primero).
-  - [ ] Por identificar (movimientos): orden por fecha de llegada desc (más recientes) — ya implementado en `getUnidentified`, solo ajustar límite/orden si hace falta.
+  - [x] Alertas: actualizar `ALERT_MAX_DAYS_AHEAD` y `severityFor()` a los umbrales del plan (rojo ≤5 días vencido, amarillo 5-10, verde >10) y ordenar por severidad (rojo → amarillo → verde).
+  - [x] Accionables, Esperando terceros: orden por fecha de creación desc (más recientes).
+  - [x] Curso automático: orden por progreso calculado asc (reutilizar cálculo `completedCount/totalSteps` de `inbox.service.ts:263`, más atrasadas primero).
+  - [x] Por identificar (movimientos): orden por fecha de llegada desc (más recientes) — ya implementado en `getUnidentified`, solo ajustar límite/orden si hace falta.
 
 - [ ] **Frontend (carmi-digital):**
   - [ ] Renderizar el contador "5 de 20" debajo de cada título de sección (si `total > 5`) en `InboxDashboard.tsx`.
