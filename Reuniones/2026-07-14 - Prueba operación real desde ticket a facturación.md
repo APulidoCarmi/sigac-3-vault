@@ -15,7 +15,14 @@
 ### Refactor de pantallas completado
 Se reorganizó la interfaz de manera más lógica tras la adición de campos de referencia. El objetivo era reducir navegación innecesaria entre pantallas.
 
-### Estructura de bandeja de entrada del ejecutivo
+### Estructura de bandeja de entrada del ejecutivo — Con límite de visualización
+**Principio clave:** No mostrar TODAS las referencias (saturación). Usar como herramienta de **priorización rápida**.
+
+**Limite de visualización:**
+- Mostrar solo las **3-5 referencias más importantes/críticas** (las prioridades en las que debe enfocarse el ejecutivo)
+- **Indicador de cantidad total:** Mostrar cuántas referencias hay en total, pero listar solo las relevantes
+- **Objetivo:** Si ejecutivo entra y ve todo limpio/verde → su día va bien. Bandeja como filtro de prioridades, no listado largo.
+
 Se definió una propuesta de 7 secciones para la bandeja de entrada (dashboard de ejecutivo):
 
 1. **Alertas** — Referencias con situaciones críticas:
