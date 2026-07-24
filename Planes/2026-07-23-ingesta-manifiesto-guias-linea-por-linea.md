@@ -79,6 +79,36 @@ modelo `Guia` — no crear una tabla nueva ni tocar `UnidentifiedWaybill`.
   21, detenerse a analizar y decidir la relación definitiva entre las tres
   tablas** — no asumir el mapeo campo-a-campo sin esa revisión.
 
+### Aclaraciones post-exploración de código (2026-07-23)
+
+Antes de implementar se releyó el código actual (`Guia` en
+`prisma/schema.prisma`, módulo NestJS `guias`, `GuiaFormModal.tsx`,
+`WeightSection.tsx`, y los patrones de bulk/agrupación existentes en el
+repo) y surgieron 4 dudas de diseño no cubiertas por el plan original,
+resueltas con el usuario:
+
+- **Bulk import cubre ambos casos: pegar texto (TSV) y subir archivo
+  CSV/Excel.** No se recorta a solo-pegar. Esto implica agregar una
+  librería nueva de parseo de archivos al front (el repo no tiene ninguna
+  hoy — se descartó reusar algo existente porque no existe: ver
+  `features/zeus-shell/components/Renderers/ExcelRenderer.tsx`, que es solo
+  un visor de Excel ya subido, no un parser). Elegir la librería (ej.
+  `xlsx` o `papaparse`) al implementar el paso del parser.
+- **Formato de fecha del manifiesto: no confirmado/variable.** El parser de
+  la columna "Fecha" no debe asumir un único formato (ni DD/MM/YYYY ni
+  MM/DD/YYYY fijo); debe tolerar/detectar varios formatos comunes al
+  parsear.
+- **Agrupación por Destinatario: normalizada, no exacta.** El agrupamiento
+  automático de filas (Opción B, ya decidido arriba) compara el texto de
+  `Destinatario` con `trim()` + comparación case-insensitive, no el string
+  byte a byte — tolera variaciones triviales de mayúsculas/espacios del
+  manifiesto real sin crear grupos espurios.
+- **`registeredBy` del endpoint bulk: un solo valor por request**, no uno
+  por fila — el usuario actual que confirma la importación completa
+  (mismo criterio que el resto del módulo `guias`, que hoy no tiene guard
+  de auth y recibe `registeredBy` explícito en el body). El DTO del bulk
+  comparte un `registeredBy` a nivel raíz, aplicado a las N guías creadas.
+
 ## Fuera de alcance
 
 - Automatización de la ingesta del correo del manifiesto de carga (queda
