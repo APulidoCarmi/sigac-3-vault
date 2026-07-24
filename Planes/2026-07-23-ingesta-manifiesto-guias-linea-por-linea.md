@@ -130,7 +130,7 @@ resueltas con el usuario:
 
 ## Pasos
 
-- [ ] **Migración Prisma** (vía CLI, `npx prisma migrate dev --name
+- [x] **Migración Prisma** (vía CLI, `npx prisma migrate dev --name
   add-manifest-fields-to-guia`) agregando a `Guia` los campos nuevos, todos
   opcionales: `fecha` (DateTime?), `origen` (String?), `descripcionMercancia`
   (String? @db.Text), `peso` (Decimal? @db.Decimal(12,3)), `pesoUnidad`
@@ -138,10 +138,10 @@ resueltas con el usuario:
   (Decimal? @db.Decimal(14,2)), `domicilioDestinatario` (String? @db.Text),
   `remitente` (String? @db.VarChar(255)), `domicilioRemitente` (String?
   @db.Text), `numeroVuelo` (String? @db.VarChar(20)).
-- [ ] **Backend — DTOs y servicio de `Guia`**: actualizar
+- [x] **Backend — DTOs y servicio de `Guia`**: actualizar
   `CreateGuiaDto`/`UpdateGuiaDto` y el servicio correspondiente para
   aceptar y persistir los campos nuevos (todos opcionales).
-- [ ] **Backend — endpoint de creación masiva**: nuevo endpoint (ej. `POST
+- [x] **Backend — endpoint de creación masiva**: nuevo endpoint (ej. `POST
   /guias/bulk`) que reciba un arreglo de filas ya resueltas (con
   `companyId` asignado por grupo desde el front) y cree N registros `Guia`
   en una sola transacción Prisma.
