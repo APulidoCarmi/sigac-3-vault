@@ -130,7 +130,7 @@ resueltas con el usuario:
 
 ## Pasos
 
-- [x] **Migración Prisma** (vía CLI, `npx prisma migrate dev --name
+- [ ] **Migración Prisma** (vía CLI, `npx prisma migrate dev --name
   add-manifest-fields-to-guia`) agregando a `Guia` los campos nuevos, todos
   opcionales: `fecha` (DateTime?), `origen` (String?), `descripcionMercancia`
   (String? @db.Text), `peso` (Decimal? @db.Decimal(12,3)), `pesoUnidad`
@@ -138,45 +138,37 @@ resueltas con el usuario:
   (Decimal? @db.Decimal(14,2)), `domicilioDestinatario` (String? @db.Text),
   `remitente` (String? @db.VarChar(255)), `domicilioRemitente` (String?
   @db.Text), `numeroVuelo` (String? @db.VarChar(20)).
-- [x] **Backend — DTOs y servicio de `Guia`**: actualizar
+- [ ] **Backend — DTOs y servicio de `Guia`**: actualizar
   `CreateGuiaDto`/`UpdateGuiaDto` y el servicio correspondiente para
   aceptar y persistir los campos nuevos (todos opcionales).
-- [x] **Backend — endpoint de creación masiva**: nuevo endpoint (ej. `POST
+- [ ] **Backend — endpoint de creación masiva**: nuevo endpoint (ej. `POST
   /guias/bulk`) que reciba un arreglo de filas ya resueltas (con
   `companyId` asignado por grupo desde el front) y cree N registros `Guia`
   en una sola transacción Prisma.
-- [x] **Frontend — tipos y servicio**: actualizar `Guia`,
+- [ ] **Frontend — tipos y servicio**: actualizar `Guia`,
   `CreateGuiaDto`/`UpdateGuiaDto` y `guiasService` en
   `lib/api/modules/guias.ts` con los campos nuevos y el método de creación
   masiva.
-- [x] **Frontend — ampliar `GuiaFormModal`** (alta individual) con los
+- [ ] **Frontend — ampliar `GuiaFormModal`** (alta individual) con los
   campos nuevos: fecha, origen, descripción de mercancía, peso + selector
   de unidad (KG/LB/G/TON, mismo patrón visual de `WeightSection.tsx`),
   piezas, bultos, valor, domicilio destinatario, remitente, domicilio
   remitente, número de vuelo — todos opcionales.
-- [x] **Frontend — parser de bulk import**: función que reciba texto
+- [ ] **Frontend — parser de bulk import**: función que reciba texto
   pegado (TSV, tal como Excel copia filas) o un archivo CSV/Excel, detecte
   el header esperado (Fecha, Guía Master, Guía House, Origen, Descripción
   de la Mercancía, Peso, Piezas, Bulto, Valor, Destinatario, Domicilio
   Destinatario, Remitente, Domicilio Remitente, Número de Vuelo) y mapee
   cada columna a su campo del modelo, parseando `valor` (quitar `$` y
   comas) y `peso`/`piezas`/`bultos` como numéricos.
-- [x] **Frontend — UI de importación masiva**: modal/pantalla nueva con
+- [ ] **Frontend — UI de importación masiva**: modal/pantalla nueva con
   textarea para pegar el bloque (o input file), tabla de previsualización
   editable de las filas parseadas, agrupación automática por texto de
   `Destinatario` idéntico, y un selector de `Company` por cada grupo
   distinto antes de confirmar.
-- [x] **Frontend — conectar el botón "Importar guías"** en
+- [ ] **Frontend — conectar el botón "Importar guías"** en
   `app/(customerPortal)/guias/page.tsx`, junto al botón ya existente
   "Nueva guía", que abre el modal de importación masiva.
-
----
-
-## Estado: ✅ COMPLETADO (2026-07-24)
-
-Todas las tareas implementadas y verificadas. Flujo completo de ingesta masiva funcional:
-parseo TSV/CSV → agrupación por destinatario → selectores de cliente → creación bulk en Prisma.
-Verificación interactiva con Playwright confirmó parser, agrupación, y UI de selectores.
 
 ## Riesgos y side effects a vigilar
 
