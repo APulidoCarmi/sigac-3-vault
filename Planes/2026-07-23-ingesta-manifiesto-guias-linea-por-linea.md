@@ -161,12 +161,12 @@ resueltas con el usuario:
   Destinatario, Remitente, Domicilio Remitente, Número de Vuelo) y mapee
   cada columna a su campo del modelo, parseando `valor` (quitar `$` y
   comas) y `peso`/`piezas`/`bultos` como numéricos.
-- [ ] **Frontend — UI de importación masiva**: modal/pantalla nueva con
+- [x] **Frontend — UI de importación masiva**: modal/pantalla nueva con
   textarea para pegar el bloque (o input file), tabla de previsualización
   editable de las filas parseadas, agrupación automática por texto de
   `Destinatario` idéntico, y un selector de `Company` por cada grupo
   distinto antes de confirmar.
-- [ ] **Frontend — conectar el botón "Importar guías"** en
+- [x] **Frontend — conectar el botón "Importar guías"** en
   `app/(customerPortal)/guias/page.tsx`, junto al botón ya existente
   "Nueva guía", que abre el modal de importación masiva.
 
