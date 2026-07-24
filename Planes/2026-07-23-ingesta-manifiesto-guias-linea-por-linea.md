@@ -145,16 +145,16 @@ resueltas con el usuario:
   /guias/bulk`) que reciba un arreglo de filas ya resueltas (con
   `companyId` asignado por grupo desde el front) y cree N registros `Guia`
   en una sola transacción Prisma.
-- [ ] **Frontend — tipos y servicio**: actualizar `Guia`,
+- [x] **Frontend — tipos y servicio**: actualizar `Guia`,
   `CreateGuiaDto`/`UpdateGuiaDto` y `guiasService` en
   `lib/api/modules/guias.ts` con los campos nuevos y el método de creación
   masiva.
-- [ ] **Frontend — ampliar `GuiaFormModal`** (alta individual) con los
+- [x] **Frontend — ampliar `GuiaFormModal`** (alta individual) con los
   campos nuevos: fecha, origen, descripción de mercancía, peso + selector
   de unidad (KG/LB/G/TON, mismo patrón visual de `WeightSection.tsx`),
   piezas, bultos, valor, domicilio destinatario, remitente, domicilio
   remitente, número de vuelo — todos opcionales.
-- [ ] **Frontend — parser de bulk import**: función que reciba texto
+- [x] **Frontend — parser de bulk import**: función que reciba texto
   pegado (TSV, tal como Excel copia filas) o un archivo CSV/Excel, detecte
   el header esperado (Fecha, Guía Master, Guía House, Origen, Descripción
   de la Mercancía, Peso, Piezas, Bulto, Valor, Destinatario, Domicilio
