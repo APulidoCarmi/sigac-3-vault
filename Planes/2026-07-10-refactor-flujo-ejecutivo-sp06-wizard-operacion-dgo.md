@@ -373,3 +373,23 @@ con el usuario + evidencia de meets (2026-07-12, ver "Decisiones finales").
 Historial del intento previo conservado arriba (no se borró el rastro). El
 manifiesto original con el diagnóstico que originó el replanteo sigue en
 `Planes/.manifiestos/2026-07-10-refactor-flujo-ejecutivo-sp06-wizard-operacion-dgo.md`.
+
+**⚠️ Revertido/superado 2026-07-28** por
+[[2026-07-28-unificar-wizard-operacion-dgo-y-proforma-por-dgo]]: verificado en
+código real (auditoría previa a `/implementa` de ese plan) que
+`components/operations/CreateOperationModal.tsx` **seguía vivo** en paralelo
+al wizard de 4 pasos que este sub-plan construyó
+(`customs-operation/createOperation/page.tsx`), contradiciendo la premisa de
+este documento (línea 13-16: "el refactor opera sobre el wizard de 4 pasos,
+NO sobre `CreateOperationModal.tsx`"). El usuario decidió invertir la
+arquitectura: se **eliminó por completo** `customs-operation/createOperation/`
+(el wizard que este sub-plan construyó, incluyendo `StepDgoSelection.tsx`,
+`stepCustomsInfo.tsx`, el cableado de `preview-taxes`, y el ajuste de
+`handleFinish()`), y su lógica útil se **portó** a `CreateOperationModal.tsx`
+(ahora el único wizard, colapsado a un solo pase: 1 DGO = 1 pedimento, sin el
+loop multi-grupo que este sub-plan dejó documentado en sus tareas). El
+trabajo de **backend** de este sub-plan (migración `dgoId` en
+`OperationPedimento`, `GET /dgo/selectable`, `validateHomogeneousRegimen`,
+`assertNotLocked`, ajuste de `POST /operations` para multi-referencia) sigue
+vigente y es la base que el plan de 2026-07-28 reutiliza — no se revirtió
+nada de eso.

@@ -39,3 +39,11 @@ DGO/pedimentos repartidos en varias operaciones. Origen: glosario "Operación" d
 tocó el front: `ReferenceOperations.tsx` ya soportaba multi-referencia (SPEC-007) y no
 requería cambios estructurales, solo la fuente de datos (backend). Ver manifiesto:
 [[.manifiestos/2026-07-10-refactor-flujo-ejecutivo-sp12-tab-operaciones]].
+
+**Nota 2026-07-28:** [[2026-07-28-unificar-wizard-operacion-dgo-y-proforma-por-dgo]]
+tocó `ReferenceOperations.tsx` (el mismo archivo que este sub-plan reusa) para eliminar
+el item "Ver Proforma" del dropdown de acciones — la vista de proforma a nivel-operación
+completa se elimina (Decisión 8 de ese plan; la proforma se reubica a nivel DGO). No
+afecta la consulta/agrupación vía DGO que este sub-plan implementó (sigue vigente), solo
+retira un botón que ya estaba explícitamente fuera de alcance aquí (línea 23: "Proforma
+(SP-15) ... aunque sus botones viven en este tab").

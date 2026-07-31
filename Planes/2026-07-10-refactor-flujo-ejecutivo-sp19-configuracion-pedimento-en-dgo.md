@@ -87,20 +87,26 @@ resolverla ahí mismo en vez de confiar en lo que reenvía el cliente.
   `aduana`/`clavePedimento`/`patente`/`regimen`/`destino`, llamando
   `PATCH /dgo/:id`. Debe respetar el bloqueo `assertNotLocked` (mostrar
   solo lectura si el DGO ya originó un pedimento, con mensaje explicativo).
-- [ ] **Auditar y decidir qué campos de la pestaña "Aduanas" del wizard son
-  legítimos de la Operación vs. remanentes de pedimento**: si
-  `customsOfficeId`/`customsPatentId` en `stepCustomsInfo.tsx` representan
-  la aduana/patente REAL de despacho de la operación (dato correcto a nivel
-  operación, puede diferir del DGO en casos de consolidación), dejarlos
-  pero renombrar/aclarar en UI que son de la Operación, no del pedimento.
-  Si resultan ser duplicados del dato del DGO, quitarlos del wizard y
-  mostrar de solo lectura lo que ya trae cada `pedimentoGroup` desde su DGO.
-- [ ] **Arreglar el bug de grupos congelados**: implementar el selector de
-  grupo activo en el wizard (usar `setActivePedimentoGroupIndex`/
-  `loadGroupFormData`/`saveCurrentFormDataToGroup`, ya existentes en el
-  store pero sin consumidor en UI) para que, con 2+ DGOs seleccionados, el
-  usuario pueda ver/confirmar/ajustar los datos de cada pedimento por
-  separado antes de crear la Operación.
+- [x] ~~**Auditar y decidir qué campos de la pestaña "Aduanas" del wizard son
+  legítimos de la Operación vs. remanentes de pedimento**~~ — **Obsoleta
+  (2026-07-28)**: superada por
+  [[2026-07-28-unificar-wizard-operacion-dgo-y-proforma-por-dgo]]. Ese plan ya
+  resolvió la pregunta: `aduana` (Aduana de Despacho) y `patente` son datos de
+  operación completa (Decisión 1), capturados una sola vez en
+  `Step2OperationConfig.tsx` (tarea 3 de ese plan); régimen/clave/destino/
+  observaciones son de solo lectura desde el DGO (Decisión 3).
+  `stepCustomsInfo.tsx` (donde vivía la ambigüedad original) se eliminó por
+  completo junto con todo `customs-operation/createOperation/` (tarea 6 de
+  ese plan).
+- [x] ~~**Arreglar el bug de grupos congelados**~~ — **Obsoleta (2026-07-28)**:
+  superada por
+  [[2026-07-28-unificar-wizard-operacion-dgo-y-proforma-por-dgo]]. Ese plan
+  eliminó el loop multi-grupo por completo (tarea 3): el wizard unificado ya
+  no revisita steps por cada pedimento/DGO, así que no hay "grupos 2+
+  congelados" que arreglar — `setActivePedimentoGroupIndex`/
+  `loadGroupFormData`/`saveCurrentFormDataToGroup` dejaron de usarse en
+  `CreateOperationModal.tsx` (se retiraron sus destructurings por quedar sin
+  consumidor).
 - [ ] **Backend — resolver `pedimentoCode`/datos de pedimento server-side
   desde el DGO**, no desde el payload del cliente, en
   `validarValorAgregadoPorClave` y en cualquier otro punto de
@@ -123,3 +129,12 @@ resolverla ahí mismo en vez de confiar en lo que reenvía el cliente.
 queda con selección directa de DGOs) confirmada por el dueño de producto
 (2026-07-12). Diagnóstico completo verificado contra meet
 [[2026-07-07 - Revision de pantallas flujo operación]] y código real.
+
+**Actualización 2026-07-28:** 2 de las 5 tareas quedaron obsoletas, superadas
+por [[2026-07-28-unificar-wizard-operacion-dgo-y-proforma-por-dgo]] (que
+invierte la arquitectura: `CreateOperationModal` pasa a ser el único wizard,
+alimentado por DGOs, colapsado a un solo pase — ver detalle en las tareas
+marcadas arriba). Las tareas de construir el formulario en el DGO (ya
+resuelta por `DgoPedimentoForm`, ver ese plan), el fix de backend para
+resolver `pedimentoCode` server-side desde el DGO, y la verificación final no
+se tocaron en esta actualización.

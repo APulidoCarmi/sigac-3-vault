@@ -38,3 +38,18 @@ Pantalla #24 del [[Inventario_Pantallas_v3]] (🟢 ya existe). Revisar el pedime
 ## Estado
 ✅ Implementado. Ver manifiesto:
 [[.manifiestos/2026-07-10-refactor-flujo-ejecutivo-sp15-proforma-pedimento]].
+
+**Actualizado 2026-07-28** por
+[[2026-07-28-unificar-wizard-operacion-dgo-y-proforma-por-dgo]] (Decisión 8/9): la
+proforma deja de vivir solo a nivel Operación (`GET /operations/:id/proforma`) — se
+extiende a nivel DGO individual, para verse en vivo mientras se captura el DGO, antes de
+firmar/crear la operación. Reusa el mismo `OperationProformaDrawer.tsx` que este sub-plan
+dejó como base (no se crea uno nuevo, corrigiendo una decisión intermedia del plan de
+2026-07-28 que inicialmente proponía duplicarlo). Cambios concretos: se eliminó la
+invocación a nivel-operación completa en `ReferenceOperations.tsx` (tarea 8 de ese plan,
+completada); pendiente en ese mismo plan (tareas 12-14, backend + frontend, aún no
+implementadas al cierre de esta nota) adaptar `OperationProformaDrawer.tsx` para aceptar
+`dgoId` (además de `operationId`) e integrarlo en `ReferenceDGOTab.tsx`/`DgoActionsDrawer`.
+El armado de `ProformaData` se extrae a un método de servicio reusable en
+`carmi-odin-api-v2`, parametrizado por datos crudos en vez de por `operationId` — la
+limpieza de código muerto de este sub-plan (D1, "Limpia") no se revierte.

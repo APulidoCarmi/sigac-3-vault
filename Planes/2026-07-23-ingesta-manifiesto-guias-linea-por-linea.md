@@ -224,3 +224,119 @@ resueltas con el usuario:
   agrupación visual, asignar cliente a cada grupo, confirmar creación, y
   verificar que las 17 filas aparecen en la tabla del tablero sin errores
   en consola del navegador.
+
+## Mejoras adicionales al tablero de guías (2026-07-26)
+
+### Contexto
+
+El tablero (`app/(customerPortal)/guias/page.tsx`) carga hoy todas las
+guías de una sola vez (`useGuias({ limit: 100 })`) sin paginado real ni
+filtros, y muestra `guiaMaster` como identificador principal de la fila
+(`guiaLabel()`: `guia.guiaMaster || guia.guiaHouse || '—'`). El módulo de
+References ya resuelve este mismo problema con paginado server-side y
+filtros por query params — se usa como referencia directa, no se reinventa
+el patrón.
+
+Investigación previa a estas tareas (releída antes de escribir los pasos):
+
+- **Tabla de referencia**: `app/(customerPortal)/references/components/ReferenceClassicTable.tsx`.
+  No usa el `DataTable` de TanStack (`components/processManagement/data-table.tsx`)
+  — es una `Table` de shadcn hecha a mano combinada con el componente
+  `Pagination`/`PaginationContent`/`PaginationItem`/`PaginationLink`/
+  `PaginationEllipsis`/`PaginationPrevious`/`PaginationNext` de
+  `components/ui/pagination.tsx`. El paginado es **server-side**: un hook
+  local `useReferences` (dentro del mismo archivo, no exportado) arma un
+  `URLSearchParams` con `page`, `limit`, `search`, `status`,
+  `clientCompanyId`, `trafficTypeId`, etc. y llama a `GET /references`
+  cada vez que cambia algún filtro o la página, reseteando `page` a 1 al
+  cambiar filtros. Los filtros (búsqueda con debounce de 400ms, selects de
+  cliente/tráfico/status) viajan como query params al backend — no hay
+  filtrado en el arreglo del cliente.
+- **Backend `GET /references`** (`references.controller.ts`, `findAll`)
+  acepta: `page`, `limit`, `status`, `brokerCompanyId`, `clientCompanyId`
+  (alias `clientId`), `projectId`, `trafficTypeId`, `deletionFilter`,
+  `availableForOperation`, `search` (matchea número de referencia o
+  nombre de cliente), `dateFrom`/`dateTo`.
+- **Backend `GET /guias`** (`guias.controller.ts`, `findAll`) hoy solo
+  acepta `page`, `limit`, `status`, `companyId` — sin `search`, sin
+  `referenceId`, sin filtro por `guiaHouse`/`guiaMaster`. El shape de
+  respuesta (`FindAllGuiasResult { data, total, page, limit, totalPages }`)
+  ya es idéntico al de References, así que el trabajo real es replicar el
+  patrón de filtros+paginado que ya existe ahí, no inventar uno nuevo.
+
+### Decisiones tomadas
+
+- **Reusar el patrón de `ReferenceClassicTable.tsx`**, no el `DataTable`
+  de TanStack: paginado y filtros **server-side** vía query params al
+  backend, con el componente `Pagination` de shadcn para los controles.
+  Motivo: instrucción explícita del usuario de revisar la tabla de
+  References y reusarla si aplica; el paginado client-side del `DataTable`
+  de TanStack (usado en `BulkImportModal`) no sirve aquí porque ese es
+  para datasets ya cargados completos en memoria (preview de un bulk
+  pegado), no para el listado completo de guías en DB.
+- **Filtros server-side, no client-side**: igual que References, cada
+  filtro (guía house, guía master, cliente, referencia) se manda como
+  query param y el backend hace el filtrado en la consulta Prisma — no se
+  trae todo y se filtra en el navegador.
+- **Columna principal de la tabla muestra `guiaHouse`**, no `guiaMaster`.
+  Cambio directo en `guiaLabel()` de `page.tsx`.
+
+### Pasos
+
+- [x] **Backend — ampliar filtros de `GET /guias`**: agregar a
+  `FindAllGuiasFilters` (en `guias.service.ts`) y a los `@Query()` del
+  controller los parámetros `guiaHouse` (contains, case-insensitive),
+  `guiaMaster` (contains, case-insensitive) y `referenceId` (exacto,
+  ya existe la columna `referenceId` en `Guia`). `companyId` ya existe;
+  no tocarlo. Confirmar si se agrega también `search` combinado (guía
+  house/master en un solo campo) o se dejan como filtros separados —
+  decidir al implementar según cuál se ve mejor en el toolbar.
+- [x] **Frontend — tipos**: actualizar `FindAllGuiasParams` en
+  `lib/api/modules/guias.ts` con los nuevos parámetros de filtro.
+- [x] **Frontend — paginado server-side en `/guias`**: reemplazar
+  `useGuias({ limit: 100 })` por estado de `page`/`limit` (limit fijo,
+  ej. 10 o 20, igual que References) que se pasa como parámetro a
+  `useGuias`, y agregar los controles `Pagination` de shadcn debajo de la
+  tabla (mismo patrón visual que `ReferenceClassicTable.tsx`).
+- [x] **Frontend — filtros en el toolbar del tablero**: agregar inputs de
+  búsqueda por Guía House y Guía Master (con debounce, mismo criterio de
+  400ms que References), un `SearchableSelect`/`Select` de cliente
+  (reusando `useClients`, mismo patrón que `GuiaFormModal`), y un
+  selector/búsqueda de referencia vinculada (revisar si conviene un
+  `SearchableSelect` contra `GET /references?search=...` o un simple
+  input de número de referencia — decidir al implementar). Todo filtro
+  resetea `page` a 1 al cambiar, igual que References.
+- [x] **Frontend — columna de guía**: cambiar `guiaLabel()` en
+  `page.tsx` para mostrar `guia.guiaHouse` como identificador principal
+  de la fila (dejar de priorizar `guiaMaster`).
+
+### Riesgos y side effects a vigilar
+
+- **`selectedIds` y selección de fila cruzando páginas**: hoy
+  `toggleSelectAll`/`selectedIds` operan sobre el arreglo `guias` completo
+  cargado en memoria (100 filas). Al pasar a paginado server-side, "todas"
+  en `toggleSelectAll` pasa a significar "todas las de la página actual",
+  no todas las que existen — confirmar con el usuario si eso es aceptable
+  o si se necesita alguna indicación visual de que la selección no cruza
+  páginas (afecta a los botones "Crear referencia (N)" y "Asignar
+  régimen/pedimento (N)" ya existentes).
+- **Filtro por `guiaHouse`/`guiaMaster` con `contains` vs exacto**: definir
+  si la búsqueda debe ser subcadena (más flexible, consistente con
+  `search` de References) o coincidencia exacta — no asumir sin
+  confirmar al implementar.
+- No se toca el bulk import (`BulkImportModal`) ni su `DataTable` de
+  TanStack — esa tabla es de preview en memoria antes de crear, un caso
+  distinto al listado paginado de guías ya creadas.
+
+### Criterios de verificación
+
+- `GET /guias?guiaHouse=...`, `?guiaMaster=...`, `?referenceId=...` y
+  combinaciones con `companyId`/`status` devuelven resultados filtrados
+  correctamente y paginados (`total`/`totalPages` coherentes).
+- El tablero `/guias` pagina desde el backend (network tab: cada cambio
+  de página dispara un nuevo `GET /guias?page=N&...`, no se trae todo de
+  una vez).
+- Los filtros del toolbar (guía house, guía master, cliente, referencia)
+  filtran correctamente y resetean a la página 1 al cambiar.
+- La columna de guía en la tabla muestra el número de Guía House (no
+  Guía Master) para cada fila.
