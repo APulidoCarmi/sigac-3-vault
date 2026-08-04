@@ -13,6 +13,7 @@ calza en ninguna, crea una nueva sección o añádela al final.
 - [x] Implementar límite de visualización en bandeja de entrada (máx 3-5 referencias/movimientos top) ([[2026-07-14 - Prueba operación real desde ticket a facturación]]; nota: medida temporal hasta validar Excel con Enrique)
 - [x] Validar bandeja de entrada con Enrique en pantalla ([[2026-07-14 - Prueba operación real desde ticket a facturación]])
 - [x] Definir búsquedas y visualización del módulo de Pedimentos en dashboard ([[2026-07-14 - Prueba operación real desde ticket a facturación]])
+- [ ] Agregar acción para marcar una referencia como "urgente" y que aparezca en la bandeja de entrada ([[2026-07-31 - Revisión de Movimientos - Guía]]; nota: pedido original de Enrique; v1 sin restricción de quién puede marcarla, se ajustan criterios después)
 
 ## Referencia, DGO y Operaciones (core)
 
@@ -38,6 +39,8 @@ calza en ninguna, crea una nueva sección o añádela al final.
 - [ ] Crear tipo de documento "Previo" (reporte de verificación previa), distinto de factura comercial ([[2026-07-24 - Prueba operación real desde ticket a facturación]]; nota: este tipo debe reflejarse en Expediente Aduanero para poder contrastar el previo contra la factura comercial durante la glosa digital)
 - [ ] Mejorar UX de carga de documentos en Expediente Aduanero ([[2026-07-24 - Prueba operación real desde ticket a facturación]]; nota: subida múltiple sin reabrir el modal, thumbnail/preview de la primera página, mostrar el tipo de documento asignado directamente en el listado sin abrir sub-pantalla, buscador/filtro de documentos, y edición manual de la fecha de recepción)
 - [ ] Permitir marcar cuál versión de un documento (ej. factura corregida vs. original con error) es la vigente que alimenta el DGO ([[2026-07-24 - Prueba operación real desde ticket a facturación]])
+- [ ] **PRIORIDAD.** Al subir una factura en el DGO, integrar la factura al mismo objeto de expediente asociado al movimiento/referencia (mismo expediente donde se suben los documentos de la referencia) ([[2026-07-31 - Revisión de Movimientos - Guía]])
+- [ ] Permitir cargar el documento de una factura en el DGO de forma que quede vinculado a esa factura (documento + datos manuales) y aparezca también en Expediente Aduanero; si no se sube el documento en ese momento y ya existe en Expediente Aduanero un documento no ligado a ninguna factura manual, poder ligar ese documento existente a la factura ([[2026-07-31 - Revisión de Movimientos - Guía]])
 
 ## Recinto y Citas
 
@@ -63,6 +66,12 @@ código. Ver [[2026-07-16 - Flujo diario de manifiestos, régimen y candados (Qu
 - [ ] Mostrar solo la guía house en la tabla de guías, guardando también la guía master en BD ([[2026-07-24 - Prueba operación real desde ticket a facturación]]; nota: confirmado por Daniel para Taico como la guía que da la directriz operativa real)
 - [ ] Dividir la tabla de guías en tabs por tipo de tráfico (aéreo/marítimo/terrestre), visibles según el perfil/tráfico asignado al usuario ([[2026-07-24 - Prueba operación real desde ticket a facturación]]; nota: campos necesarios son sustancialmente distintos entre aéreo y marítimo, ver tarea de campos marítimos en sección Marítimo)
 - [ ] Definir nuevos estatus de guía aérea: Revalidado, Peso certificado, Digitalizada ([[2026-07-24 - Prueba operación real desde ticket a facturación]])
+
+### Movimientos y facturas por guía (Querétaro)
+
+- [ ] **PRIORIDAD.** Agregar en el módulo de Guías el formulario de facturas para subir factura (documento + datos) vinculada directamente a la guía House ([[2026-07-31 - Revisión de Movimientos - Guía]])
+- [ ] Generar automáticamente un movimiento de entrada por cada guía House al crearse (backend, oculto en UI para Querétaro; visible para almacén y desde referencia para ver el previo por guía) ([[2026-07-31 - Revisión de Movimientos - Guía]])
+- [ ] **PRIORIDAD.** Cuando se suba una factura desde DGO/Referencia sin guía asociada, preguntar a qué guía House pertenece para vincularla ([[2026-07-31 - Revisión de Movimientos - Guía]])
 
 ### Régimen y DGO
 
@@ -101,3 +110,7 @@ código. Ver [[2026-07-16 - Flujo diario de manifiestos, régimen y candados (Qu
 ## Seguimientos puntuales
 
 - [ ] Revisar con Fer (lunes 2026-07-27) qué métodos de valoración e incoterms de proveedores están o no configurados/sincronizados para Taico ([[2026-07-24 - Prueba operación real desde ticket a facturación]]; nota: detectado en la demo que el sistema no jaló automáticamente el método de valoración/incoterm de un proveedor)
+
+## Manifestación de Valor / COVE
+
+- [ ] Implementar en factura los conceptos de incrementables desglosados según la manifestación de valor (COVE) ([[2026-07-31 - Daily Scrum - incrementables de factura para manifestación de valor y subdivisión por guía]]; nota: dividir el campo genérico de incrementable en los 6-7 conceptos que exige la manifestación —vs. los 3-4 actuales de factura (flete, embalaje, seguro, otros)—, y agregar a factura fechas, precio pagado/por pagar/compenso pago (aclarar con Enrique el término exacto de esta tercera opción), forma de pago, dos campos libres y manejo de moneda —factura en su moneda original, manifestación en pesos—; urgente: el proceso de manifestación de valor arranca 2026-08-01; guiarse del desarrollo que ya hacen Carlos/Brenda/Miguel en Sigac 2.0. **Validar además** (no implementar de nuevo) que los campos de vinculación y método de valoración por factura —que Angel confirmó en el meet que ya existen ("sí, lo tengo")— efectivamente cubran lo que pide la manifestación de valor para esos dos conceptos)

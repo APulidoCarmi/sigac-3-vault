@@ -38,3 +38,27 @@ en un botón, no solo abrir) y confirmar que el padre sigue montado.
 Aplicado en esta sesión a `ReferenceDGOTab.tsx` (`DgoActionsDrawer`). Si aparece un nuevo
 Sheet anidado (o un tercer nivel), revisar si el mismo patrón hace falta en cada nivel del
 stack.
+
+## Actualización (sesión 2026-08-03, [[2026-08-02-facturas-en-guias-sp05-auto-vinculo-dgo]]): pointer-events pegado y doble overlay con Dialogs anidados
+
+Mismo problema de fondo (Sheet/Dialog anidado sobre otro ya abierto), dos síntomas más
+encontrados al agregar un **tercer** nivel de anidación (Sheet no-modal `InvoiceFormModal`
+→ Dialog `InvoiceDocumentHistoryDialog` → Dialog de vista previa dentro de ese):
+
+1. **Doble overlay = fondo casi negro.** Si el Dialog hijo no declara `hideOverlay`, su
+   propio `bg-black/80` se suma al del padre. Ya existe el prop `hideOverlay` en
+   `components/ui/dialog.tsx`/`sheet.tsx` (documentado en su JSDoc) — hay que declararlo
+   explícitamente en el `DialogContent`/`SheetContent` del hijo cuando se abre encima de
+   otro ya montado.
+2. **`pointer-events: none` pegado en `<body>` tras cerrar el último modal**, bloqueando
+   toda interacción con la página (no solo con el modal — con **todo**). Mismo patrón de
+   fix ya usado en `InvoiceFormModal.tsx`/`ItemDetailModal.tsx`/`OperationProformaDrawer.tsx`:
+   en el `onOpenChange` del Dialog/Sheet, al cerrar (`next === false`),
+   `setTimeout(() => { document.body.style.pointerEvents = ''; }, 100)`.
+
+**Regla ampliada:** cualquier Dialog/Sheet que se abra anidado sobre otro ya montado
+necesita las tres cosas, no solo `onInteractOutside`: `hideOverlay` (evitar overlay
+doble) + reset de `pointerEvents` al cerrar (evitar bloqueo total) + `onInteractOutside`
+prevenido en el padre (evitar cierre en cascada). Verificar los tres explícitamente con
+Playwright antes de dar por buena una UI con modales anidados: abrir → interactuar →
+cerrar → confirmar que la página sigue interactiva y sin overlay residual.
