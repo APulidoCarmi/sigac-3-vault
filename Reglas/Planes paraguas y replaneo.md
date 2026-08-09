@@ -18,6 +18,12 @@ medias.
   enlazados con wikilinks, cada uno con su estado.
 - Cada sub-plan hijo es un plan normal: cabe en sesiones limpias de
   `/implementa` y tiene sus propios criterios de verificación.
+- Si la iniciativa cruza capas, el paraguas lleva además una sección
+  **`## Contrato`** con la forma exacta de la frontera, y es de solo lectura
+  para los hijos. Vive en el paraguas, no repetida en cada hijo, y
+  `/implementa-paraguas` se la pasa textual a cada subagente que la toque.
+  Sin ella, dos hijos en paralelo pueden construir mitades que no encajan sin
+  que nadie lo note hasta integrar. Ver [[Contrato entre capas]].
 - El paraguas no se "implementa": se actualiza al cerrar cada hijo (marcar
   el hijo, anotar decisiones que afecten a los siguientes). `/sync` lo
   trata como cualquier plan activo.
@@ -34,5 +40,8 @@ medias.
   un paso hecho quedó invalidado, se anota como tal y el ajuste entra
   como paso nuevo.
 - Ningún replaneo continúa sin validación humana del plan corregido.
+- Un contrato que hay que cambiar es un replaneo, no un ajuste: además de
+  corregirlo, hay que revisar las mitades ya escritas contra la forma vieja
+  —incluidas las de hijos que ya cerraron. Ver [[Contrato entre capas]].
 
 Origen: plan [[2026-07-06-cobertura-27-casos-flujo]].

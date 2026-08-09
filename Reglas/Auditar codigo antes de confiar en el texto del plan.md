@@ -17,8 +17,20 @@ tres veces en una sola sesión de `/implementa`:
 3. La Decisión 7 (auditoría de "todos los entry points" de un componente) no había
    encontrado 2 entry points reales que sí navegaban al flujo viejo.
 
-En los tres casos, grep/lectura directa del código —no el texto del plan— fue lo que
-reveló la discrepancia, y en los tres casos la sesión se detuvo a preguntarle al usuario
+En [[2026-08-05-dgo-pedimento-en-vivo-sp01-backend-contrato-pedimento-data]] volvió a
+pasar, ahora en revisión previa a implementación (antes de `/implementa`, no durante):
+el sub-plan asumía que `Operation.paymentConfig` (Json sin tipar) estaba libre para
+definir el shape de depósito referenciado/pago electrónico — en realidad ya tenía una
+forma real y viva (`{IGI,IVA,DTA,PRV,CNT}`, códigos de forma de pago) usada en dos repos.
+También asumía un "patrón ya existente" de resolución de FK hacia `PatentDigitalSeal`
+que no existía (la cadena FK real pasa por `Reference`, no por los campos de agente de
+`Operation`; el único resolver existente pertenece a otro dominio, VUCEM). Grepear el uso
+real de un campo Json antes de asumirlo "vacío", y confirmar con grep que un patrón
+"reusable" citado por el plan existe de verdad en el dominio correcto, evitó que
+`/implementa` partiera de esas dos premisas incorrectas.
+
+En los cuatro casos, grep/lectura directa del código —no el texto del plan— fue lo que
+reveló la discrepancia, y en los cuatro casos la sesión se detuvo a preguntarle al usuario
 en vez de decidir unilateralmente cómo resolverla.
 
 **Cómo aplicarlo:**
@@ -32,3 +44,8 @@ en vez de decidir unilateralmente cómo resolverla.
 - Al encontrar una discrepancia real (no solo una duda menor), parar y preguntar antes de
   improvisar un diseño distinto — ver también [[Discutir antes de persistir tareas]] para
   el mismo principio aplicado a memoria/tareas.
+- Un campo `Json` sin DTO explícito no es automáticamente "libre para definir" — grepear
+  su uso real en todos los repos (backend y frontend) antes de asumir que está vacío.
+- Si el plan dice "reusar un patrón/servicio ya existente", confirmar con grep que ese
+  servicio resuelve el mismo caso de uso y no un dominio distinto con su propia
+  complejidad/excepciones antes de decidir inyectarlo.

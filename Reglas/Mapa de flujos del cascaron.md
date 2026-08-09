@@ -60,7 +60,7 @@ repo del cascarón) antes de improvisar una solución.
     con los comandos de migración.
 17. **Varios clientes en la misma máquina** →
     [[Disciplina multi-cliente y sincronizacion del baul]].
-18. **El cliente tiene skills propias** → los 7 nombres de skills del
+18. **El cliente tiene skills propias** → los 8 nombres de skills del
     cascarón son reservados (declarados en el README); las skills del
     cliente usan otros nombres y el aprovisionamiento no las toca.
 

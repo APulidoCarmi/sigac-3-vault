@@ -40,7 +40,7 @@ calza en ninguna, crea una nueva sección o añádela al final.
 - [ ] Mejorar UX de carga de documentos en Expediente Aduanero ([[2026-07-24 - Prueba operación real desde ticket a facturación]]; nota: subida múltiple sin reabrir el modal, thumbnail/preview de la primera página, mostrar el tipo de documento asignado directamente en el listado sin abrir sub-pantalla, buscador/filtro de documentos, y edición manual de la fecha de recepción)
 - [ ] Permitir marcar cuál versión de un documento (ej. factura corregida vs. original con error) es la vigente que alimenta el DGO ([[2026-07-24 - Prueba operación real desde ticket a facturación]])
 - [ ] **PRIORIDAD.** Al subir una factura en el DGO, integrar la factura al mismo objeto de expediente asociado al movimiento/referencia (mismo expediente donde se suben los documentos de la referencia) ([[2026-07-31 - Revisión de Movimientos - Guía]])
-- [ ] Permitir cargar el documento de una factura en el DGO de forma que quede vinculado a esa factura (documento + datos manuales) y aparezca también en Expediente Aduanero; si no se sube el documento en ese momento y ya existe en Expediente Aduanero un documento no ligado a ninguna factura manual, poder ligar ese documento existente a la factura ([[2026-07-31 - Revisión de Movimientos - Guía]])
+- [ ] Permitir cargar el documento de una factura en el DGO de forma que quede vinculado a esa factura (documento + datos manuales) y aparezca también en Expediente Aduanero, clasificado con tipo de documento 94 "Factura o lista de empaque comercial"; si no se sube el documento en ese momento y ya existe en Expediente Aduanero un documento no ligado a ninguna factura manual, poder ligar ese documento existente a la factura ([[2026-07-31 - Revisión de Movimientos - Guía]]; causa raíz analizada en [[2026-08-04 - Análisis causa raíz documento de factura no aparece en Expediente Aduanero]]: son tablas separadas —`invoice_images` vs `reference_documents`— sin ninguna FK/llamado que las cruce; falta decidir mapeo a enum `FACTURA` vs `LISTA_EMPAQUE`)
 
 ## Recinto y Citas
 
@@ -69,8 +69,8 @@ código. Ver [[2026-07-16 - Flujo diario de manifiestos, régimen y candados (Qu
 
 ### Movimientos y facturas por guía (Querétaro)
 
-- [ ] **PRIORIDAD.** Agregar en el módulo de Guías el formulario de facturas para subir factura (documento + datos) vinculada directamente a la guía House ([[2026-07-31 - Revisión de Movimientos - Guía]])
-- [ ] Generar automáticamente un movimiento de entrada por cada guía House al crearse (backend, oculto en UI para Querétaro; visible para almacén y desde referencia para ver el previo por guía) ([[2026-07-31 - Revisión de Movimientos - Guía]])
+- [x] Agregar en el módulo de Guías el formulario de facturas para subir factura (documento + datos) vinculada directamente a la guía House ([[2026-07-31 - Revisión de Movimientos - Guía]]; implementado: `GuiaInvoicesModal.tsx` reutiliza `InvoiceFormModal`/`InvoiceMerchandiseAccordion` del DGO con `guiaId`; backend con campo `guiaId` en `Invoice` y auto-asignación de `referenceId`/`dgoId` en `invoices.service.ts`; nota: gap conocido documentado en el propio modal — si la guía aún no tiene Referencia/movimiento asociado, la factura no se propaga a Expediente Aduanero)
+- [x] **PRIORIDAD.** Generar automáticamente un movimiento de entrada por cada guía House al crearse (backend + frontend visible en detalle de referencia; si referencia es aérea, formulario de movimiento de entrada muestra campos de guía, no de movimiento terrestre) ([[2026-07-31 - Revisión de Movimientos - Guía]])
 - [ ] **PRIORIDAD.** Cuando se suba una factura desde DGO/Referencia sin guía asociada, preguntar a qué guía House pertenece para vincularla ([[2026-07-31 - Revisión de Movimientos - Guía]])
 
 ### Régimen y DGO
