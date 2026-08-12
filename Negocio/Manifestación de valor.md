@@ -1,0 +1,14 @@
+# Negocio: Manifestación de valor
+
+## Reglas vigentes
+- La manifestación de valor tiene 4 casos según cómo se relaciona el cliente con el proceso (orden oficial usado con clientes): (1) Carmi hace todo desde Sigac, solo se envía link al cliente para revisar y aceptar; (2) Carmi captura toda la información y el cliente entra al portal a firmar (link con campo para subir firma); (3) el cliente entra al portal de Carmi y hace él mismo todo el proceso (llena datos, sube firma, genera la manifestación); (4) el cliente usa su propia herramienta externa y solo entrega el acuse/folio a Carmi — único caso externo por completo al sistema. — origen: [[2026-08-11 - Revisión de pendientes para operación completa]] (2026-08-11)
+- En los 4 casos se envía link al cliente (no solo en 2 y 4). — origen: [[2026-08-11 - Revisión de pendientes para operación completa]] (2026-08-11)
+- Lo que el cliente sube como acuse es solo el **folio**, nunca un documento — el documento de manifestación de valor siempre lo genera Carmi. El folio se valida contra el Buzón del SAT. — origen: [[2026-08-11 - Revisión de pendientes para operación completa]] (2026-08-11)
+- Para poder validar el folio contra Buzón, el cliente debe haber agregado el RFC de consulta (del licenciado/patente que use Carmi) en sus sellos digitales ante el SAT. Si no lo agregó, el sistema no puede consultar y debe notificar automáticamente al cliente que falta agregar ese RFC — para evitar que asuma que quedó validado. — origen: [[2026-08-11 - Revisión de pendientes para operación completa]] (2026-08-11)
+- Cuando Carmi firma por el cliente (casos donde Carmi no tiene los sellos del cliente): se consulta con la firma del licenciado o de la patente que se haya agregado como RFC de consulta; si es una patente distinta a la del licenciado de referencia, se agregan ambos RFC de consulta automáticamente al prellenar la información. — origen: [[2026-08-11 - Revisión de pendientes para operación completa]] (2026-08-11)
+- El link de manifestación de valor debe llevar seguridad vía correo + código OTP (sin usuario/contraseña), y debe ser mutable/reutilizable, no de un solo uso. — origen: [[2026-08-11 - Revisión de pendientes para operación completa]] (2026-08-11)
+- El cobro de la manifestación de valor cambia según el caso (1/2/3/4) en el que se hizo — por eso el log debe registrar el caso, no solo que se hizo. — origen: [[2026-08-11 - Revisión de pendientes para operación completa]] (2026-08-11)
+- Clientes con esquema de autorización previa (ej. APL, Nalco, Ecolab) requieren notificación adicional cuando se autoriza y cuando se firma/timbra, más allá del link. — origen: [[2026-08-11 - Revisión de pendientes para operación completa]] (2026-08-11)
+
+## Historial de cambios
+- 2026-08-11 — Se definieron y documentaron por primera vez de forma completa los 4 casos de manifestación de valor y sus reglas de validación/seguridad ([[2026-08-11 - Revisión de pendientes para operación completa]]).
